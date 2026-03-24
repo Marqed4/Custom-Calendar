@@ -1,6 +1,6 @@
 package com.zachery.customcalendar;
+
 import java.awt.TrayIcon.MessageType;
-import java.util.Queue;
 import java.io.File;
 import java.awt.*;
 
@@ -44,8 +44,10 @@ public class AlarmActivation
     {
         try 
         {
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(
-            new java.io.File(("resources/assets/sounds/notification.png"));
+            
+            File sound = SystemDirectory.Directory("Assets/notification.wav");
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(sound);
+            
             Clip clip = AudioSystem.getClip();
             clip.open(audioStream);
             clip.start();
