@@ -45,7 +45,7 @@ public class AlarmActivation
         try 
         {
             
-            File sound = SystemDirectory.Directory("Assets/notification.wav");
+            File sound = SystemDirectory.Directory("resources/assets/sounds/windows-10 calendar chime.wav");
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(sound);
             
             Clip clip = AudioSystem.getClip();
