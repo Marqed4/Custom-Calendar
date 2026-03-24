@@ -1,186 +1,165 @@
 package com.zachery.windowscalendarenhanced;
 
-import java.awt.*;
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.time.LocalDateTime;
+import java.util.PriorityQueue;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Scanner;
+import java.util.Objects;
 import java.util.List;
+import java.awt.*;
 
 /*
 todo
 Implement SQL Lite in app database for alarms instead of records by text file
+Possibly have a List<Map<LocalDateTime, Map<String, String>>> Yea... nightmare fuel.
 */
 
-public class DateAlarm 
+public class DateAlarm
 {
-    Queue<LocalDateTime> alarms;
-
     //List of lists includes LocalDateTime(s) & notification information
-    List<List<String>> alarms_data;
+    PriorityQueue<AlarmRecord> alarmDataQueue = new PriorityQueue<>();
 
     //Creates a DataAlarm Object
-    //Notification String data format: LocalDateTime | Title | Description (Key: | = New Line)
+    //Notification String data format: LocalDateTime|&^Title|&^Description (Key: |&^ = Seperation)
     public DateAlarm() throws IOException 
     {
-        this.alarms = new PriorityQueue<>();
+        Scanner scan = getAllNotificationData();
 
-        Scanner sc = getNotificationData();
-
-        //Loads notification data into DataAlarm object
-        while (sc.hasNextLine()) 
+        while (scan.hasNextLine()) 
         {
-            String localDateTime = sc.nextLine();
+            String line = scan.nextLine();
+            String[] parts = line.split("\\|&\\^");
 
-            this.alarms.add(LocalDateTime.parse(localDateTime));
-            List<String> data = new ArrayList<>();
+            AlarmRecord alarm = new AlarmRecord(
+                LocalDateTime.parse(parts[0]),
+                parts[1],
+                parts[2]
+            );
 
-            data.add(localDateTime);
-            data.add(sc.nextLine());
-            data.add(sc.nextLine());
-
-            this.alarms_data.add(data);
+            alarmDataQueue.add(alarm);
         }
 
+        // Remove all of the expired alarms
+        while (!alarmDataQueue.isEmpty()) {
+            AlarmRecord next = alarmDataQueue.peek();
+            long delay = Duration.between(LocalDateTime.now(), next.time()).getSeconds();
 
-        long delay = Duration.between(LocalDateTime.now(), this.alarms.peek()).getSeconds();
-
-        if (delay <= 0) {
-            removeAlarm(this.alarms.peek());
+            if (delay <= 0) {
+                alarmDataQueue.poll();
+            } else {
+                break;
+            }
         }
     }
 
-    public void setAlarm(LocalDateTime time, String title, String desc) throws IOException {
-        this.alarms.add(time);
 
-        //Add alarm data to "Notification_Data" file
-        PrintWriter pw = getPrintWriter();
+    public void setAlarm(LocalDateTime time, String title, String desc) throws IOException 
+    {
 
-        /*
-        todo
-        PrintWriter should add the future date time into the log and current Queue object.
-        */
+        //Add alarm data to current Queue
+        alarmDataQueue.add(new AlarmRecord(time, title, desc));
 
-        pw.println(time);
-        pw.println(title);
-        pw.println(desc);
+        //Add alarm data to notififications.txt
+        try (FileWriter fw = new FileWriter("notifications/notifications.txt", true);
+        PrintWriter pw = new PrintWriter(fw)) 
+        {
+        pw.print(time + "|&^");
+        pw.print(title + "|&^");
+        pw.print(desc + "\n");
+        }
     }
 
     public void removeAlarm(LocalDateTime time) 
     {
-        this.alarms.remove(time);
         //todo
-        //remove the alarm info from the Notification_Data.txt
+        //remove the alarm info from the notifications.txt
+        alarmDataQueue.removeIf(now -> now.time().equals(time));
+;
     }
 
     //I learned somewhat about threads dealing with memory allocation via malloc! Can it come in handy here?
     //checkAlarm should be called when the application is started. From there it remains a background process.
-    public void checkAlarm() throws InterruptedException {
+    public void checkAlarm() throws InterruptedException 
+    {
+    Thread thread = new Thread(() -> 
+    {
+        while (!alarmDataQueue.isEmpty()) 
+        {
+            AlarmRecord nextAlarm = alarmDataQueue.peek();
+            if (nextAlarm == null) break;
 
-        Thread thread = new Thread(() -> {
-            long delay = Duration.between(this.alarms.peek(), LocalDateTime.now()).getSeconds();
-            AlarmActivation alarm;
+            long delay = Duration.between(LocalDateTime.now(), nextAlarm.time()).getSeconds();
 
             try {
-                if (delay > 0) 
-                {
+                if (delay > 0) {
                     Thread.sleep(delay * 1000);
                 }
 
-                for (List<String> data : this.alarms_data)
-                {
-                    if (Objects.equals(data.getFirst(), this.alarms.peek().toString())) {
-                        alarm = new AlarmActivation(data.get(1), data.get(2));
-                        alarm.displayTray();
-                        alarm.playDefaultNotiSound();
-                    }
-                }
+                //Fire the CANNONS
+                AlarmRecord CANNON = alarmDataQueue.poll();
+                new AlarmActivation
+                (
+                    CANNON.title(),
+                    CANNON.desc()
+                )
+                
+                .displayTray()
+                .playSound();
             } 
-            
-            catch (InterruptedException e) 
-            
-            {
+            catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-
-            } catch (AWTException e) 
-            
-            {
+                break;
+            } 
+            catch (AWTException e) {
                 throw new RuntimeException(e);
             }
-        });
+        }
+    });
 
         thread.start();
     }
-
-    public Scanner getNotificationData() throws IOException  
     
+
+    //Helper Functions
+    private Scanner getAllNotificationData() throws IOException  
     {
-        Scanner sc;
-
-        try 
-        
-        {
-            sc = new Scanner(new File(System.getenv("APPDATA") + "\\Windows Calendar\\Notification_Data"));
-        } 
-        
-        catch (FileNotFoundException e) 
-        
-        {
-            File Notification_Data = new File(System.getenv("APPDATA") + "\\Windows Calendar\\Notification_Data");
-            boolean created = Notification_Data.createNewFile();
-            if (created) 
-                
-            {
-                sc = new Scanner(new File(System.getenv("APPDATA") + "\\Windows Calendar\\Notification_Data"));
-            } 
-
-            else 
-            
-            {
-                throw new FileNotFoundException(
-                        "Failed to create Notification_Data file at: " + Notification_Data);
-            }
-        }
-        return sc;
+        return new Scanner(SystemDirectory.ObtainFile("notifications/notifications.txt"));
     }
 
-    public PrintWriter getPrintWriter() throws IOException  
-    
-    {
-        PrintWriter pw;
+    //Legacy Helpers
 
-        try 
-        
-        {
-            pw = new PrintWriter(System.getenv("APPDATA") + "\\Windows Calendar\\Notification_Data");
-        } catch (FileNotFoundException e) 
-        
-        {
-            File Notification_Data = new File(System.getenv("APPDATA") + "\\Windows Calendar\\Notification_Data");
-            boolean created = Notification_Data.createNewFile();
+    // private PrintWriter getPrintWriter() throws IOException  
+    // {
+    //     return new PrintWriter(SystemDirectory.ObtainFile("notifications/notifications.txt"));
+    // }
 
-            if (created) 
-                
-            {
-                pw = new PrintWriter(System.getenv("APPDATA") + "\\Windows Calendar\\Notification_Data");
-            } else {
-                throw new FileNotFoundException(
-                        "Failed to create Notification_Data file at: " + Notification_Data);
-            }
-        }
-        return pw;
-    }
+    /* <---- ALARM DATA ----> */
+    // private String getAlarmTime(String line)
+    // {
+    //     int div1 = line.indexOf("|&^");
+    //     return line.substring(0, div1);
+    // }
+
+    // private String getTitle(String line)
+    // {
+    //     int div1 = line.indexOf("|&^");
+    //     int div2 = line.indexOf("|&^", div1 + 3);
+    //     return line.substring(div1 + 3, div2);
+    // }
+
+    // private String getDesc(String line)
+    // {
+    //     int div1 = line.indexOf("|&^");
+    //     int div2 = line.indexOf("|&^", div1 + 3);
+    //     return line.substring(div2 + 3);
+    // }
 }
 
-//Notification Example
-//2026-18-03T17:05:00
-//Homework
-//Essentials of Software Engineering Chapter 6 Reading
-
-//Notification Example
-//2026-23-03T17:05:00
-//Homework
-//Essentials of Software Engineering Chapter 6 Reading
+//Notification Examples (Ignore "No. ")
+//1. 2026-20-02T17:05:00|&^Homework|&^Essentials of Software Engineering Chapter 6 Reading
+//2. 2026-24-03T17:05:00|&^Homework|&^Essentials of Software Engineering Chapter 12 Reading
+//2. 2026-26-03T17:05:00|&^Homework|&^CISC 3810/7510: Database Systems: Database Design

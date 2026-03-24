@@ -1,24 +1,34 @@
 package com.zachery.windowscalendarenhanced;
 import java.awt.TrayIcon.MessageType;
+import java.util.Queue;
 import java.io.File;
 import java.awt.*;
 
-public class AlarmActivation {
+import javax.print.attribute.standard.Media;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+
+public class AlarmActivation
+{
     private static final int BUFFER_SIZE = 4096;
     String title;
     String desc;
 
-    public AlarmActivation(String title, String desc) throws AWTException {
+    public AlarmActivation(String title, String desc) throws AWTException
+    {
         this.title = title;
         this.desc = desc;
     }
 
-    public void displayTray() throws AWTException {
+    public AlarmActivation displayTray() throws AWTException 
+    {
         SystemTray tray = SystemTray.getSystemTray();
 
-        Image notification_image = Toolkit.getDefaultToolkit().createImage(System.getenv("APPDATA") + "\\Windows Calendar\\Assets\\Notification Image.png");
+        File notificationPNG = SystemDirectory.Directory("resources/assets/images/notification.png");
+        Image notificationImg = Toolkit.getDefaultToolkit().createImage(notificationPNG.getAbsolutePath());
 
-        TrayIcon trayIcon = new TrayIcon(notification_image, "Windows Calendar Notification");
+        TrayIcon trayIcon = new TrayIcon(notificationImg, "Calendar Notification");
 
         trayIcon.setImageAutoSize(true);
 
@@ -26,10 +36,25 @@ public class AlarmActivation {
         tray.add(trayIcon);
 
         trayIcon.displayMessage(this.title, this.desc, MessageType.INFO);
+
+        return this;
     }
 
-    public void playDefaultNotiSound() 
+    public AlarmActivation playSound() 
     {
+        try 
+        {
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(
+            new java.io.File(("resources/assets/sounds/notification.png"));
+            Clip clip = AudioSystem.getClip();
+            clip.open(audioStream);
+            clip.start();
+        } 
+        catch (Exception e) 
+        {
+            System.err.println("Missing Notification Audio");
+        }
         
+        return this;
     }
 }
