@@ -10,18 +10,16 @@ import "./CalendarGrid.css";
 const DAY_GIFS = [sun, mon, tue, wed, thu, fri, sat];
 const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-export default function CalendarGrid({ calendarDays, currentDate, alarms, onDayClick }) {
+export default function CalendarGrid({ calendarDays, currentDate, alarms, onDayClick, gridSize }) {
   return (
-    <div className="calendar-grid">
+    <div className="calendar-grid" style={{ width: gridSize, height: gridSize }}>
 
-      {/* Day header GIFs */}
       {DAY_GIFS.map((gif, i) => (
-        <div key={i} className="day-label">
-          <img src={gif} alt={DAY_NAMES[i]} className="day-label-gif" />
+        <div key={i} className="day">
+          <img src={gif} alt={DAY_NAMES[i]} className="day-gif" />
         </div>
       ))}
-
-      {/* Day cells */}
+      
       {calendarDays.map((date, i) => (
         <div
           key={i}
@@ -31,16 +29,23 @@ export default function CalendarGrid({ calendarDays, currentDate, alarms, onDayC
           onClick={() => onDayClick(date)}
         >
           {date && (
-            <>
-              <div className="day-number">{date.getDate()}</div>
-              {alarms.some(a =>
-                a.time?.startsWith(date.toISOString().split("T")[0])
-              ) && <div className="alarm-dot" />}
+  <>
+    <div className="day-number">{date.getDate()}</div>
+      {alarms
+        .filter(a => a.time?.startsWith(date.toISOString().split("T")[0]))
+        .map((alarm, idx) => (
+          <div key={idx} className="alarm">
+            <span className="alarm-title">{alarm.title}</span>
+              <span className="alarm-time">
+                {new Date(alarm.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  </div>
+                ))
+              }
             </>
           )}
         </div>
       ))}
-
     </div>
   );
 }

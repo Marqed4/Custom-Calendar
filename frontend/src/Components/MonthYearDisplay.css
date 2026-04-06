@@ -1,0 +1,58 @@
+.main-month {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0px;
+}
+
+.month-gif {
+  height: 40px;
+  width: auto;
+}
+
+.month-text {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.year-gifs {
+  display: flex;
+  align-items: center;
+  margin-top: -25px;
+}
+
+.number-gif {
+  height: 40px;
+  width: auto;
+  margin-left: -90px;
+}
+
+.number-gif:first-child {
+  margin-left: 0;
+}
+
+.nav-arrow {
+  height: 40px;
+  width: auto;
+  cursor: pointer;
+}
+
+.nav-arrow:hover {
+  opacity: 0.7;
+  transition: 0.15s ease;
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: -50px;
+  overflow: hidden;
+}
+
+.nav-arrow {
+  height: 40px;
+  width: auto;
+  cursor: pointer;
+  margin: 0 -60px;
+}

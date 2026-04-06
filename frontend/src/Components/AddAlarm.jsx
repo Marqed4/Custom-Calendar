@@ -1,91 +1,82 @@
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { useState } from "react";
+import { emit } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import WinterBackground from "../resources/assets/images/Winter Forest.gif";
-import Sidebar from "./Sidebar.jsx";
-import CalendarGrid from "./CalendarGrid.jsx";
-import "./Home.css";
+import "./AddAlarm.css";
 
-export default function Home() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [alarms, setAlarms] = useState([]);
+export default function AddAlarm() {
+  const params = new URLSearchParams(window.location.search);
+  const day = params.get("day");
+  const month = params.get("month");
+  const year = params.get("year");
 
-  async function loadAlarms() {
-    try {
-      const res = await fetch("http://localhost:4567/api/alarms");
-      const data = await res.json();
-      setAlarms(data);
-    } catch (err) {
-      console.error("Failed to load alarms:", err);
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [time, setTime] = useState("");
+  const [error, setError] = useState("");
+
+  async function saveAlarm() {
+    if (!title || !time) {
+      setError("Title and time are required.");
+      return;
     }
-  }
 
-  useEffect(() => {
-    loadAlarms();
-    const unlisten = listen("alarm-saved", () => loadAlarms());
-    return () => { unlisten.then(f => f()); };
-  }, []);
+    const iso = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}T${time}:00`;
 
-  function changeMonth(offset) {
-    const newDate = new Date(currentDate);
-    newDate.setMonth(newDate.getMonth() + offset);
-    setCurrentDate(newDate);
-  }
-
-  function getCalendarDays(date) {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const startDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const days = [];
-    for (let i = 0; i < startDay; i++) days.push(null);
-    for (let d = 1; d <= daysInMonth; d++) days.push(new Date(year, month, d));
-    return days;
-  }
-
-  async function openAlarmWindow(date) {
-    if (!date) return;
     try {
-      await invoke("open_alarm_window", {
-        day: date.getDate(),
-        month: currentDate.getMonth() + 1,
-        year: currentDate.getFullYear(),
+      await fetch("http://localhost:4567/api/alarms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ time: iso, title, desc }),
       });
+
+      await emit("alarm-saved");
+      await getCurrentWindow().close();
     } catch (err) {
-      console.error("Failed to open alarm window:", err);
+      setError("Failed to save alarm. Is the server running?");
     }
   }
 
-  const calendarDays = getCalendarDays(currentDate);
+  async function handleCancel() {
+    await getCurrentWindow().close();
+  }
 
   return (
-    <div
-      className="background-wrapper"
-      style={{ backgroundImage: `url(${WinterBackground})` }}
-    >
-      <div className="app-container">
+    <>
+      <div
+        className="alarm-background"
+        style={{ backgroundImage: `url(${WinterBackground})` }}
+      />
+      <div className="alarm-window">
+        <h2>Add Alarm</h2>
+        <p>{`${month}/${day}/${year}`}</p>
 
-        <Sidebar currentDate={currentDate} calendarDays={calendarDays} />
+        {error && <p className="alarm-error">{error}</p>}
 
-        <main className="main">
-          <div className="top-nav">
-            <button className="nav-btn" onClick={() => changeMonth(-1)}>◀</button>
-            <h1 className="main-month">
-              {currentDate.toLocaleString("default", { month: "long" })}{" "}
-              {currentDate.getFullYear()}
-            </h1>
-            <button className="nav-btn" onClick={() => changeMonth(1)}>▶</button>
-          </div>
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
 
-          <CalendarGrid
-            calendarDays={calendarDays}
-            currentDate={currentDate}
-            alarms={alarms}
-            onDayClick={openAlarmWindow}
-          />
-        </main>
+        <textarea
+          placeholder="Description"
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+        />
 
+        <input
+          type="time"
+          value={time}
+          onChange={(e) => setTime(e.target.value)}
+        />
+
+        <div className="alarm-buttons">
+          <button onClick={saveAlarm}>Save</button>
+          <button onClick={handleCancel}>Cancel</button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

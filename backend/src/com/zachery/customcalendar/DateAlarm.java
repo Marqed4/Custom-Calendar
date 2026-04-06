@@ -122,9 +122,15 @@ public class DateAlarm
     
 
     //Helper Functions
-    private Scanner getAllNotificationData() throws IOException  
+    private Scanner getAllNotificationData() throws IOException 
     {
-        return new Scanner(SystemDirectory.ObtainFile("notifications/notifications.txt"));
+        java.io.File file = SystemDirectory.ObtainFile("notifications/notifications.txt");
+        if (!file.exists()) 
+        {
+            file.getParentFile().mkdirs();
+            file.createNewFile();
+        }
+        return new Scanner(file);
     }
 
     //Legacy Helpers

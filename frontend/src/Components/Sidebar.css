@@ -1,6 +1,5 @@
-/* ── Sidebar ── */
-
 .sidebar {
+  position: relative;
   backdrop-filter: blur(4px);
   min-width: 220px;
   max-width: 260px;
@@ -12,7 +11,37 @@
 }
 
 .sidebar-month {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   margin-bottom: 20px;
+  margin-left: 10px;
+}
+
+.sidebar-month-gif {
+  height: 60px;
+  width: auto;
+}
+
+.sidebar-month-text {
+  font-size: 1rem;
+  color: white;
+}
+
+.sidebar-year-gifs {
+  display: flex;
+  align-items: center;
+  margin-top: -25px;
+}
+
+.sidebar-number-gif {
+  height: 45px;
+  width: auto;
+  margin-left: -105px;
+}
+
+.sidebar-number-gif:first-child {
+  margin-left: 0;
 }
 
 .sidebar-item {
@@ -36,5 +65,18 @@
   background: #1a1a1a;
   border-radius: 4px;
   text-align: center;
-  line-height: 28px;
+  line-height: 2;
+}
+
+.faq-link {
+  position: absolute;
+  bottom: 0.5rem;
+  left: -1rem;
+  display: flex;
+  align-items: center;
+}
+
+.details-header {
+  height: 45px;
+  width: auto;
 }

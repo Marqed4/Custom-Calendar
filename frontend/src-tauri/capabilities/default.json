@@ -4,6 +4,13 @@
   "description": "Default capabilities",
   "windows": ["main", "add-alarm"],
   "permissions": [
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        { "url": "https://www.marqed.it/*" },
+        { "url": "https://marqed.it/*" }
+      ]
+    },
     "core:default",
     "core:webview:allow-create-webview-window",
     "core:window:allow-close",

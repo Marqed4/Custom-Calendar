@@ -5,19 +5,6 @@ import com.google.gson.Gson;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
-/*
-todo
-Priority:
-
-2. Up & Down buttons to switch/navigate between weeks.
-3. Allow the right clicking on the pane shows event menu.
-4. Ability to view calendar by Day/ Week/ Year.
-
-Luxury:
-1. Bottom left of screen allows an email to be sent.
-2. Seven day forecast, showing weather conditions of the following seven days.
-*/
-
 public class Main
 {
     public static void main(String[] args) throws Exception
@@ -25,8 +12,18 @@ public class Main
         System.out.println("Starting...");
         System.out.flush();
 
+        //Port for the Spark server
+        port(4567);
+
         Gson gson = new Gson();
-        DateAlarm dateAlarm = new DateAlarm();
+
+        DateAlarm dateAlarm;
+        try {
+            dateAlarm = new DateAlarm();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
 
         before((req, res) -> {
             res.header("Access-Control-Allow-Origin", "*");
@@ -38,7 +35,13 @@ public class Main
 
         get("/api/alarms", (req, res) -> {
             res.type("application/json");
-            return gson.toJson(dateAlarm.alarmDataQueue);
+            try {
+                return gson.toJson(new java.util.ArrayList<>(dateAlarm.alarmDataQueue));
+            } catch (Exception e) {
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
         });
 
         post("/api/alarms", (req, res) -> {

@@ -18,7 +18,7 @@ public class SystemDirectory
         base = System.getProperty("user.home") + "/.local/share";
     }
 
-    File workingDirectory = new File(base, "WindowsCalendar");
+    File workingDirectory = new File(base, "CustomCalendar");
     workingDirectory.mkdirs();
     return new File(workingDirectory, filePath);
     }

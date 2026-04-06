@@ -1,14 +1,26 @@
-import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { useState, useEffect, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import WinterBackground from "../resources/assets/images/Winter Forest.gif";
-import Sidebar from "./Sidebar.jsx";
+import MonthYearDisplay from "./MonthYearDisplay.jsx";
 import CalendarGrid from "./CalendarGrid.jsx";
+import Sidebar from "./Sidebar.jsx";
+import "./MonthYearDisplay.css";
 import "./Home.css";
 
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [alarms, setAlarms] = useState([]);
+  const [gridSize, setGridSize] = useState(0);
+  const mainRef = useRef(null);
+
+  function updateSize() {
+    if (mainRef.current) {
+      const { width, height } = mainRef.current.getBoundingClientRect();
+      const navHeight = document.querySelector(".top-nav")?.getBoundingClientRect().height ?? 55;
+      setGridSize(Math.min(width, height - navHeight));
+    }
+  }
 
   async function loadAlarms() {
     try {
@@ -23,7 +35,12 @@ export default function Home() {
   useEffect(() => {
     loadAlarms();
     const unlisten = listen("alarm-saved", () => loadAlarms());
-    return () => { unlisten.then(f => f()); };
+    updateSize();
+    window.addEventListener("resize", updateSize);
+    return () => {
+      unlisten.then(f => f());
+      window.removeEventListener("resize", updateSize);
+    };
   }, []);
 
   function changeMonth(offset) {
@@ -64,27 +81,21 @@ export default function Home() {
       style={{ backgroundImage: `url(${WinterBackground})` }}
     >
       <div className="app-container">
-
         <Sidebar currentDate={currentDate} calendarDays={calendarDays} />
-
-        <main className="main">
-          <div className="top-nav">
-            <button className="nav-btn" onClick={() => changeMonth(-1)}>◀</button>
-            <h1 className="main-month">
-              {currentDate.toLocaleString("default", { month: "long" })}{" "}
-              {currentDate.getFullYear()}
-            </h1>
-            <button className="nav-btn" onClick={() => changeMonth(1)}>▶</button>
-          </div>
-
+        <main className="main" ref={mainRef}>
+          <MonthYearDisplay
+            currentDate={currentDate}
+            onPrev={() => changeMonth(-1)}
+            onNext={() => changeMonth(1)}
+          />
           <CalendarGrid
             calendarDays={calendarDays}
             currentDate={currentDate}
             alarms={alarms}
             onDayClick={openAlarmWindow}
+            gridSize={gridSize}
           />
         </main>
-
       </div>
     </div>
   );

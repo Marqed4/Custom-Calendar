@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";;
 import Home from "./Components/Home.jsx";
 import AddAlarm from "./Components/AddAlarm.jsx";
 import "./App.css";
