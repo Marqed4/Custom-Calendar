@@ -55,4 +55,5 @@
   width: auto;
   cursor: pointer;
   margin: 0 -60px;
+  z-index: 5;
 }
