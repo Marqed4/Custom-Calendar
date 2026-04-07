@@ -65,6 +65,19 @@ public class Main
             }
         });
 
+        delete("/api/alarms", (req, res) -> {
+            res.type("application/json");
+            try {
+                AlarmRequest body = gson.fromJson(req.body(), AlarmRequest.class);
+                dateAlarm.removeAlarm(java.time.LocalDateTime.parse(body.time));
+                return gson.toJson(new MessageResponse("Alarm removed!"));
+            } catch (Exception e) {
+                e.printStackTrace();
+                res.status(500);
+                return gson.toJson(new MessageResponse("Failed: " + e.getMessage()));
+            }
+        });
+
         dateAlarm.checkAlarm();
 
         System.out.println("Java backend running on http://localhost:4567");

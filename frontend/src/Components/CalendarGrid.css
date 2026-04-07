@@ -59,7 +59,7 @@
 }
 
 .day-cell::-webkit-scrollbar-thumb {
-  background: rgba(255, 200, 255);
+  background: rgb(0, 0, 0);
   border-radius: 5px;
 }
 
@@ -106,4 +106,16 @@
 .alarm-time {
   font-size: 0.6rem;
   color: rgba(255, 255, 255, 0.7);
+}
+
+.alarm-delete {
+  height: 15px;
+  width: auto;
+  cursor: pointer;
+  align-self: flex-end;
+  opacity: 0.8;
+}
+
+.alarm-delete:hover {
+  opacity: 1;
 }

@@ -12,13 +12,11 @@ import java.util.List;
 
 public class DateAlarm
 {
-    //List of lists includes LocalDateTime(s) & notification information
     PriorityQueue<AlarmRecord> alarmDataQueue = new PriorityQueue<>();
     List<AlarmRecord> alarmDataList = new ArrayList<>();
 
     private Thread alarmThread = null;
 
-    //Notification String data format: LocalDateTime|&^Title|&^Description (Key: |&^ = Seperation)
     public DateAlarm() throws IOException 
     {
         Scanner scan = getAllNotificationData();
@@ -40,10 +38,8 @@ public class DateAlarm
             alarmDataQueue.add(alarm);
         }
 
-        // Sync display list BEFORE purge so old alarms still show on calendar
         alarmDataList = new ArrayList<>(alarmDataQueue);
 
-        // Remove expired alarms from the firing queue only
         while (!alarmDataQueue.isEmpty()) 
         {
             AlarmRecord next = alarmDataQueue.peek();
@@ -57,7 +53,6 @@ public class DateAlarm
         }
     }
 
-
     public void setAlarm(LocalDateTime time, String title, String desc) throws IOException 
     {
         String safeTitle = title.replace("\n", "<NL>");
@@ -67,7 +62,6 @@ public class DateAlarm
         alarmDataQueue.add(alarm);
         alarmDataList.add(alarm);
 
-        // Add alarm data to notifications.txt in CustomCalendar appdata's directory
         try (FileWriter fw = new FileWriter(SystemDirectory.ObtainFile("notifications/notifications.txt"), true);
         PrintWriter pw = new PrintWriter(fw)) 
         {
@@ -76,22 +70,36 @@ public class DateAlarm
             pw.print(safeDesc + "\n");
         }
 
-        // Restart the alarm thread to pick up the newly added alarm
         checkAlarm();
     }
 
-    public void removeAlarm(LocalDateTime time)
+    public void removeAlarm(LocalDateTime time) throws IOException
     {
-        alarmDataQueue.removeIf(now -> now.time().equals(time));
-        alarmDataList.removeIf(now -> now.time().equals(time));
-        // todo: remove from notifications.txt
+        alarmDataQueue.removeIf(a -> a.time().equals(time));
+        alarmDataList.removeIf(a -> a.time().equals(time));
+
+        java.io.File file = SystemDirectory.ObtainFile("notifications/notifications.txt");
+        List<String> lines = new ArrayList<>();
+
+        try (Scanner scan = new Scanner(file)) {
+            while (scan.hasNextLine()) {
+                String line = scan.nextLine();
+                String[] parts = line.split("\\|&\\^");
+                if (!LocalDateTime.parse(parts[0]).equals(time)) {
+                    lines.add(line);
+                }
+            }
+        }
+
+        try (PrintWriter pw = new PrintWriter(file)) {
+            for (String line : lines) {
+                pw.println(line);
+            }
+        }
     }
 
-    // checkAlarm starts or restarts the alarm thread.
-    // If a thread is already sleeping, it is interrupted so it re-evaluates the queue.
     public void checkAlarm()
     {
-        // Interrupt existing thread so it wakes up and re-checks the queue
         if (alarmThread != null && alarmThread.isAlive())
         {
             alarmThread.interrupt();
@@ -112,7 +120,6 @@ public class DateAlarm
                         Thread.sleep(delay * 1000);
                     }
 
-                    // Fire the CANNONS
                     AlarmRecord CANNON = alarmDataQueue.poll();
                     new AlarmActivation
                     (
@@ -124,7 +131,6 @@ public class DateAlarm
                 } 
                 catch (InterruptedException e) 
                 {
-                    // A new alarm was added — clear the flag and re-check the queue from the top
                     Thread.interrupted();
                     continue;
                 } 
@@ -140,8 +146,6 @@ public class DateAlarm
         alarmThread.start();
     }
 
-
-    // Helper Functions
     private Scanner getAllNotificationData() throws IOException 
     {
         java.io.File file = SystemDirectory.ObtainFile("notifications/notifications.txt");
@@ -153,9 +157,3 @@ public class DateAlarm
         return new Scanner(file);
     }
 }
-
-//Notification Examples (Ignore "No. ")
-//1. 2026-20-02T17:05:00|&^Homework|&^Essentials of Software Engineering Chapter 6 Reading
-//2. 2026-24-03T17:05:00|&^Homework|&^Essentials of Software Engineering Chapter 12 Reading
-//3. 2026-26-03T17:05:00|&^Homework|&^CISC. 3810/7510: Database Systems: Database Design
-//4. 2026-22-03T17:13:35|&^Dave's Donuts|&^- 2 Vanilla w/ Fresh Strawberry Jam $3<aNL>- 1 Chocolate $3

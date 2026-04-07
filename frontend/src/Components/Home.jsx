@@ -33,6 +33,19 @@ export default function Home() {
     }
   }
 
+  async function deleteAlarm(alarm) {
+    try {
+      await fetch("http://localhost:4567/api/alarms", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ time: alarm.time }),
+      });
+      loadAlarms();
+    } catch (err) {
+      console.error("Failed to delete alarm:", err);
+    }
+  }
+
   useEffect(() => {
     loadAlarms();
     const unlisten = listen("alarm-saved", () => loadAlarms());
@@ -94,6 +107,7 @@ export default function Home() {
             currentDate={currentDate}
             alarms={alarms}
             onDayClick={openAlarmWindow}
+            onDeleteAlarm={deleteAlarm}
             gridSize={gridSize}
           />
         </main>
