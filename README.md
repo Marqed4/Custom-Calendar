@@ -6,6 +6,4 @@ A feature-rich calendar that remembers the days you tried to forget.
 
 • The "Teen Spirit" AI Chatbot : An integrated AI assistant with the personality of a 19-year-old from Illinois who just started a basement band. She has opinions about your schedule.  
 
-• Seasonal Dysphoria Themes : Swappable UI backgrounds, because your calendar should reflect your emotional state.  
-
-(More Soon...)    
+• Customizable Themes, Notifications, Alert Sounds! Because your calendar should match your mood swings. (in progress...)
