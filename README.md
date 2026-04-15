@@ -12,11 +12,11 @@
     &nbsp;&nbsp;
   </p>
   <br/>
-</div>
 
 Calisigh is a calendar app that doesn't gaslight you. open it, add your events, move on. Melodrama included free of charge.
 
 ---
+</div>
 
 ### Views
 
