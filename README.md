@@ -1,19 +1,19 @@
 <div align="center">
   <br/>
   <p>
-    <img src="frontend/src-tauri/icons/128x128.png" title="Calsigh" alt="Calsigh logo" width="100" />
+    <img src="frontend/src-tauri/icons/128x128.png" title="Calisigh" alt="Calisigh logo" width="100" />
   </p>
   <p>
-    <h1>Calsigh</h1>
+    <h1>𝐶𝑎𝑙𝑖𝑠𝑖𝑔ℎ</h1>
     A feature-rich calendar that remembers the days you tried to forget.
   </p>
   <p>
-    <a href="Marqed.it/Calsigh">🌐Visit Us</a>
+    <a href="Marqed.it/Calisigh">🌐Visit Us</a>
     &nbsp;&nbsp;
   </p>
   <br/>
 
-Calsigh is a calendar app that doesn't gaslight you. open it, add your events, move on. Melodrama included free of charge.
+Calisigh is a calendar app that doesn't gaslight you. open it, add your events, move on. Melodrama included free of charge.
 
 ---
 </div>
@@ -39,13 +39,13 @@ Calsigh is a calendar app that doesn't gaslight you. open it, add your events, m
 
 ### Ethics
 
-Calsigh takes zero liability for events you add, forget, or dramatically reschedule. The app never stores your data anywhere weird... Your bad decisions are entirely your own.
+Calisigh takes zero liability for events you add, forget, or dramatically reschedule. The app never stores your data anywhere weird... Your bad decisions are entirely your own.
 
 ---
 
 ### Contributing
 
-If you're considering contributing to Calsigh, first of all, thank you! Check the [contribution guidelines](CONTRIBUTING.md) before getting started. Opinions are always welcomed.
+If you're considering contributing to Calisigh, first of all, thank you! Check the [contribution guidelines](CONTRIBUTING.md) before getting started. Opinions are always welcomed.
 
 ---
 
