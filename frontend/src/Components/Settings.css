@@ -50,6 +50,15 @@ body {
   min-height: 0;
 }
 
+.settings-main-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.settings-main-body::-webkit-scrollbar-thumb {
+  background: rgb(0, 0, 0);
+  border-radius: 5px;
+}
+
 .settings-title {
   margin: 0 0 4px 0;
   font-size: 1.1rem;
@@ -225,6 +234,12 @@ body {
   min-height: 0;
 }
 
+.sound-subtitle {
+  margin: 0 0 8px 0;
+  font-size: 0.8rem;
+  color: rgba(255,255,255);
+}
+
 .settings-sounds-list {
   display: flex;
   flex-direction: column;
@@ -233,6 +248,15 @@ body {
   flex: 1;
   min-height: 0;
   padding-bottom: 5px;
+}
+
+.settings-sounds-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.settings-sounds-list::-webkit-scrollbar-thumb {
+  background: rgb(0, 0, 0);
+  border-radius: 5px;
 }
 
 .settings-sound-card {

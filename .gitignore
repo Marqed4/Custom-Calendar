@@ -25,3 +25,6 @@ jpackage-output
 *.sln
 *.sw?
 **/frontend/src-tauri/resources/jre
+**/backend/debug.txt
+**/Automation Scripts
+

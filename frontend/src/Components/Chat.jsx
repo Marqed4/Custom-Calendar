@@ -2,10 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { convertFileSrc } from "@tauri-apps/api/core";
 
-import WinterBackground from "../resources/assets/images/Backgrounds/Winter Forest.gif";
 import FallBackground from "../resources/assets/images/Backgrounds/Fall Forest.gif";
+import WinterBackground from "../resources/assets/images/Backgrounds/Winter Forest.gif";
 import SpringBackground from "../resources/assets/images/Backgrounds/Spring Forest.gif";
 import SummerBackground from "../resources/assets/images/Backgrounds/Summer Forest.gif";
+import SilosBackground from "../resources/assets/images/Backgrounds/Silos.gif";
+import LakeSideBackground from "../resources/assets/images/Backgrounds/Lake Side.gif";
+import PeaceBackground from "../resources/assets/images/Backgrounds/Peace.gif";
+import BarnBackground from "../resources/assets/images/Backgrounds/Barn.gif";
 
 import Send from "../resources/assets/images/Signs/Semi Reflective Guitar.gif";
 
@@ -18,6 +22,10 @@ const BG_MAP = {
   winter: WinterBackground,
   spring: SpringBackground,
   summer: SummerBackground,
+  silos: SilosBackground,
+  lakeside: LakeSideBackground,
+  peace: PeaceBackground,
+  barn: BarnBackground,
 };
 
 export default function Chat() {

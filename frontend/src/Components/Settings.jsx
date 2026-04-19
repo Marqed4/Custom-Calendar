@@ -2,10 +2,16 @@ import { useState, useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/plugin-dialog";
 import { convertFileSrc } from "@tauri-apps/api/core";
+
 import FallBackground from "../resources/assets/images/Backgrounds/Fall Forest.gif";
 import WinterBackground from "../resources/assets/images/Backgrounds/Winter Forest.gif";
 import SpringBackground from "../resources/assets/images/Backgrounds/Spring Forest.gif";
 import SummerBackground from "../resources/assets/images/Backgrounds/Summer Forest.gif";
+import SilosBackground from "../resources/assets/images/Backgrounds/Silos.gif";
+import LakeSideBackground from "../resources/assets/images/Backgrounds/Lake Side.gif";
+import PeaceBackground from "../resources/assets/images/Backgrounds/Peace.gif";
+import BarnBackground from "../resources/assets/images/Backgrounds/Barn.gif";
+
 import SaveInactive from "../resources/assets/images/Settings/Save Inactive.gif";
 import SaveActive from "../resources/assets/images/Settings/Save Active.gif";
 import CancelInactive from "../resources/assets/images/Settings/Cancel Inactive.gif";
@@ -15,11 +21,15 @@ import UploadActive from "../resources/assets/images/Settings/Upload Active.gif"
 import Remove from "../resources/assets/images/Signs/Red Remove.gif";
 import "./Settings.css";
 
-const SEASONAL = [
+const BG_MAP = [
   { label: "Fall",   value: "fall",   src: FallBackground },
   { label: "Winter", value: "winter", src: WinterBackground },
   { label: "Spring", value: "spring", src: SpringBackground },
   { label: "Summer", value: "summer", src: SummerBackground },
+  { label: "Silos", value: "silos", src: SilosBackground },
+  { label: "Lake Side", value: "lakeside", src: LakeSideBackground },
+  { label: "Peace", value: "peace", src: PeaceBackground },
+  { label: "Barn", value: "barn", src: BarnBackground },
 ];
 
 function HoverGif({ inactive, active, onClick, title, className }) {
@@ -47,13 +57,13 @@ export default function Settings() {
     localStorage.getItem("calisigh-sound") ?? null
   );
 
-  const currentSeasonal = SEASONAL.find(b => b.value === selectedBg);
+  const CURRENT_BACKGROUND = BG_MAP.find(b => b.value === selectedBg);
 
-  const previewBg = currentSeasonal
-    ? currentSeasonal.src
+  const previewBg = CURRENT_BACKGROUND
+    ? CURRENT_BACKGROUND.src
     : customBackgrounds.find(e => e.split("|&")[0] === selectedBg)
         ? convertFileSrc(customBackgrounds.find(e => e.split("|&")[0] === selectedBg).split("|&")[1])
-        : SEASONAL[0].src;
+        : BG_MAP[0].src;
 
   useEffect(() => {
     loadBackgrounds();
@@ -214,7 +224,7 @@ export default function Settings() {
             <p className="settings-subtitle">Choose your background</p>
 
             <div className="settings-bg-picker">
-              {SEASONAL.map(bg => (
+              {BG_MAP.map(bg => (
                 <div
                   key={bg.value}
                   className={`settings-bg-card ${selectedBg === bg.value ? "settings-bg-card--selected" : ""}`}
@@ -263,7 +273,7 @@ export default function Settings() {
 
         <div className="settings-sounds">
           <div className="settings-sounds-body">
-            <p className="settings-subtitle">Alert Sound</p>
+            <h1 className="sound-subtitle">Alert Sound</h1>
             <div className="settings-sounds-list">
               <div
                 className={`settings-sound-card ${selectedSound === null ? "settings-sound-card--selected" : ""}`}
