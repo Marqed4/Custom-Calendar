@@ -39,8 +39,8 @@
 - **Teen spirit AI chatbot**  
   A 19‑year‑old from the Midwest who comments on your calendar like it’s a diary you left open.
 
-- **Custom themes, notifications and alert sounds**  
-  Your calendar should look and sound like the mood you are in. (In progress)
+- **Customizable backgrounds & alert sounds**  
+  Your calendar should look and sound like the mood you are in.
 
 </div>
 
