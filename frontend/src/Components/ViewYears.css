@@ -24,6 +24,7 @@
   flex-shrink: 0;
   margin-left: -60px;
   margin-right: -60px;
+  z-index: 2;
 }
 
 .view-years-nav-arrow:hover {
@@ -36,6 +37,10 @@
   width: auto;
   object-fit: contain;
   display: block;
+}
+
+.years-header-gif:hover {
+  opacity: 0.70;
 }
 
 .years-grid {

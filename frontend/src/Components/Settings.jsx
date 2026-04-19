@@ -284,6 +284,7 @@ export default function Settings() {
                 return (
                   <div
                     key={i}
+                    title={name}
                     className={`settings-sound-card ${selectedSound === name ? "settings-sound-card--selected" : ""}`}
                     onClick={() => {
                       if (selectedSound === name) {
@@ -308,7 +309,6 @@ export default function Settings() {
           </div>
 
           <div className="settings-sounds-footer">
-            <div className="settings-sounds-divider" />
             <HoverGif inactive={UploadInactive} active={UploadActive} onClick={uploadSound} title="Add Sound" className="settings-upload-songs-gif" />
           </div>
         </div>

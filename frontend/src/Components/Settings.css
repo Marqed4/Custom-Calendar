@@ -149,7 +149,8 @@ body {
   border-top: 3px solid rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.12);
   backdrop-filter: blur(6px);
-  overflow: visible;
+  overflow: hidden;
+  width: 100%;
 }
 
 .settings-action-btn {
@@ -157,7 +158,7 @@ body {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.55);
-  border-radius: 12px;
+  border-radius: 20px;
   padding: 4px 8px;
   cursor: pointer;
   transition: background 0.15s;
@@ -171,6 +172,8 @@ body {
 
 .settings-action-btn:active {
   background: rgba(0, 0, 0, 0.75);
+  transform: translateY(4px);
+  transform: scale(0.97);
 }
 
 .settings-upload-backgrounds-gif,
@@ -186,10 +189,20 @@ body {
 }
 
 .settings-upload-songs-gif {
-  height: 50px;
+  height: 40px;
   overflow: hidden;
   width: auto;
   cursor: pointer;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 20px;
+  margin-top: 5.5px;
+  transition: transform 0.08s ease, background 0.15s;
+}
+
+.settings-upload-songs-gif:active {
+  background: rgba(0, 0, 0, 0.75);
+  transform: translateY(4px);
+  transform: scale(0.97);
 }
 
 .settings-sounds {
@@ -207,7 +220,7 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 12px 10px 0 10px;
+  padding: 15px 10px 0 10px;
   overflow: hidden;
   min-height: 0;
 }
@@ -219,7 +232,7 @@ body {
   overflow-y: auto;
   flex: 1;
   min-height: 0;
-  padding-bottom: 8px;
+  padding-bottom: 5px;
 }
 
 .settings-sound-card {
@@ -238,7 +251,7 @@ body {
   flex-shrink: 0;
 }
 
-.settings-sound-card--selected {
+.settings-sound-card-selected {
   border-color: rgba(255,255,255,0.7);
   background: rgba(255,255,255,0.16);
 }
@@ -276,14 +289,15 @@ body {
 .settings-sounds-footer {
   flex-shrink: 0;
   position: relative;
-  height: px;
-  z-index: 10;
+  height: 52.5px;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-top: 1px solid rgba(255,255,255,0.15);
+  border-top: 3px solid rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.12);
   backdrop-filter: blur(6px);
+  overflow: hidden;
 }
 
 .settings-sounds-divider {
