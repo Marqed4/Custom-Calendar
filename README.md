@@ -13,7 +13,7 @@
   <br/>
 </div>
 <div align="center">
-  Open it, add your events, and keep going. The melodrama comes included.
+  Open it, add your events, choose your themes, and self-loath...
 </div>
 
 ---
