@@ -8,7 +8,7 @@
   <p>A feature‑rich Midwestern-emo calendar </p>
 
   <p>
-    <a href="https://marqed.it/Calisigh">🌐 Visit Us</a>
+    <a href="https://marqed.it/Calisigh">🌐 Visit us & learn more</a>
   </p>
   <br/>
 </div>
@@ -24,7 +24,7 @@
 |---|---|
 | <p align="center"><strong>View by month</strong><br/>The classic grid. Your chaos arranged into neat little boxes.</p> | <p align="center"><strong>View by year</strong><br/>A full year on one screen. It feels bigger when you see it all at once.</p> |
 | <p align="center"><img src="examples/View%20by%20Month.png" /></p> | <p align="center"><img src="examples/View%20by%20Year.png" /></p> |
-| <p align="center"><strong>Teen spirit chatbot</strong><br/>She has thoughts about your schedule and she is not subtle about them.</p> | <p align="center"><strong>Settings and themes</strong><br/>Change the look and feel until it matches whatever mood you are in.</p> |
+| <p align="center"><strong>Teen spirit AI chatbot</strong><br/>She has thoughts about your schedule and isn't subtle about them.</p> | <p align="center"><strong>Settings and themes</strong><br/>Change the look and feel until it matches whatever mood you are in.</p> |
 | <p align="center"><img src="examples/Chat%201.png" /></p> | <p align="center"><img src="examples/Settings%20Background%20Change.png" /></p> |
 
 ---
