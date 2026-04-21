@@ -39,10 +39,10 @@ public class DateAlarm
 
                 AlarmRecord alarm = new AlarmRecord(alarmTime, title, desc);
 
-                alarmDataList.add(alarm); // always add to list (frontend sees it)
+                alarmDataList.add(alarm);
 
                 if (alarmTime.isAfter(LocalDateTime.now()))
-                    alarmDataQueue.add(alarm); // only add future alarms to queue (firing)
+                    alarmDataQueue.add(alarm);
             }
         }
             checkAlarm();
@@ -149,7 +149,13 @@ public class DateAlarm
                     activation.displayTray();
 
                     System.out.println("=== Calling playSound...");
+                    String soundName = (selected != null && !selected.isEmpty()) ? selected : "chime";
+                    alarmSounds.playSound(soundName);
+
+                    /*
+                    Bug where volume gain isn't chained on fire.
                     activation.playSound(soundPath);
+                    */
 
                     System.out.println("=== Done.");
                 }

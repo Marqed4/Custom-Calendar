@@ -17,6 +17,8 @@ public class Main
 {
     public static void main(String[] args) throws Exception
     {
+        String iconPath = SystemDirectory.Directory("resources/assets/images/icon.ico").getAbsolutePath();
+        registerAppForToasts("com.zachery.calisigh", "Calisigh", iconPath);
         SystemDirectory.seedDefaultSounds();
 
         System.out.println("Starting...");
@@ -184,6 +186,30 @@ public class Main
             }
         });
 
+        get("/api/sounds/volume", (req, res) -> {
+            res.type("application/json");
+            try {
+                return gson.toJson(new VolumeResponse(alarmSounds.getVolume()));
+            } catch (Exception e) {
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/sounds/volume", (req, res) -> {
+            res.type("application/json");
+            try {
+                VolumeRequest body = gson.fromJson(req.body(), VolumeRequest.class);
+                alarmSounds.setVolume(body.volume);
+                return gson.toJson(new MessageResponse("Volume set."));
+            } catch (Exception e) {
+                e.printStackTrace();
+                res.status(500);
+                return gson.toJson(new MessageResponse("Failed: " + e.getMessage()));
+            }
+        });
+
         post("/api/sounds/play", (req, res) -> {
             res.type("application/json");
             try {
@@ -270,9 +296,44 @@ public class Main
         String sourcePath, name;
     }
 
+    static class VolumeRequest
+    {
+        float volume;
+    }
+
+    static class VolumeResponse
+    {
+        float volume;
+        VolumeResponse(float v) { this.volume = v; }
+    }
+
     static class MessageResponse
     {
         String message;
         MessageResponse(String msg) { this.message = msg; }
+    }
+
+    private static void registerAppForToasts(String aumid, String displayName, String iconPath) 
+    {
+        try 
+        {
+            String regPath = "HKCU\\Software\\Classes\\AppUserModelId\\" + aumid;
+
+            Runtime.getRuntime().exec(new String[]{
+                "reg", "add", regPath,
+                "/v", "DisplayName", "/t", "REG_SZ", "/d", displayName, "/f"
+            }).waitFor();
+
+            Runtime.getRuntime().exec(new String[]{
+                "reg", "add", regPath,
+                "/v", "IconUri", "/t", "REG_SZ", "/d", iconPath, "/f"
+            }).waitFor();
+
+            System.out.println("App registered for toasts: " + aumid);
+        } 
+        catch (Exception e) 
+        {
+            System.err.println("Failed to register app: " + e.getMessage());
+        }
     }
 }

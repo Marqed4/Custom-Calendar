@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { open } from "@tauri-apps/plugin-dialog";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -19,17 +19,18 @@ import CancelActive from "../resources/assets/images/Settings/Cancel Active.gif"
 import UploadInactive from "../resources/assets/images/Settings/Upload Inactive.gif";
 import UploadActive from "../resources/assets/images/Settings/Upload Active.gif";
 import Remove from "../resources/assets/images/Signs/Red Remove.gif";
+import VolumeIcon from "../resources/assets/images/Signs/Volume.gif";
 import "./Settings.css";
 
 const BG_MAP = [
-  { label: "Fall",   value: "fall",   src: FallBackground },
-  { label: "Winter", value: "winter", src: WinterBackground },
-  { label: "Spring", value: "spring", src: SpringBackground },
-  { label: "Summer", value: "summer", src: SummerBackground },
-  { label: "Silos", value: "silos", src: SilosBackground },
+  { label: "Fall",      value: "fall",     src: FallBackground },
+  { label: "Winter",    value: "winter",   src: WinterBackground },
+  { label: "Spring",    value: "spring",   src: SpringBackground },
+  { label: "Summer",    value: "summer",   src: SummerBackground },
+  { label: "Silos",     value: "silos",    src: SilosBackground },
   { label: "Lake Side", value: "lakeside", src: LakeSideBackground },
-  { label: "Peace", value: "peace", src: PeaceBackground },
-  { label: "Barn", value: "barn", src: BarnBackground },
+  { label: "Peace",     value: "peace",    src: PeaceBackground },
+  { label: "Barn",      value: "barn",     src: BarnBackground },
 ];
 
 function HoverGif({ inactive, active, onClick, title, className }) {
@@ -56,6 +57,13 @@ export default function Settings() {
   const [selectedSound, setSelectedSound] = useState(
     localStorage.getItem("calisigh-sound") ?? null
   );
+  const [volume, setVolume] = useState(100);
+  const volumeDebounceRef = useRef(null);
+  const selectedSoundRef = useRef(selectedSound);
+
+  useEffect(() => {
+    selectedSoundRef.current = selectedSound;
+  }, [selectedSound]);
 
   const CURRENT_BACKGROUND = BG_MAP.find(b => b.value === selectedBg);
 
@@ -68,6 +76,7 @@ export default function Settings() {
   useEffect(() => {
     loadBackgrounds();
     loadSounds();
+    loadVolume();
   }, []);
 
   async function loadBackgrounds() {
@@ -99,6 +108,34 @@ export default function Settings() {
     } catch (err) {
       console.error("Failed to load sounds:", err);
     }
+  }
+
+  async function loadVolume() {
+    try {
+      const res = await fetch("http://localhost:4567/api/sounds/volume");
+      const data = await res.json();
+      setVolume(Math.round((data.volume ?? 1.0) * 100));
+    } catch (err) {
+      console.error("Failed to load volume:", err);
+    }
+  }
+
+  async function handleVolumeChange(e) {
+  const val = Number(e.target.value);
+  setVolume(val);
+
+  clearTimeout(volumeDebounceRef.current);
+    volumeDebounceRef.current = setTimeout(async () => {
+      try {
+        await fetch("http://localhost:4567/api/sounds/volume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ volume: val / 100 }),
+        });
+      } catch (err) {
+        console.error("Failed to set volume:", err);
+      }
+    }, 300);
   }
 
   async function uploadBackground() {
@@ -274,6 +311,25 @@ export default function Settings() {
         <div className="settings-sounds">
           <div className="settings-sounds-body">
             <h1 className="sound-subtitle">Alert Sound</h1>
+
+            <div className="settings-volume-row">
+              <img className="settings-volume-icon" src={VolumeIcon} alt="Volume" />
+              <div className="settings-volume-slider-wrap">
+                <input
+                  className="settings-volume-slider"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  style={{
+                    background: `linear-gradient(to right, rgba(255,255,255,0.85) ${volume}%, rgba(255,255,255,0.2) ${volume}%)`
+                  }}
+                />
+              </div>
+              <span className="settings-volume-value">{volume}%</span>
+            </div>
+
             <div className="settings-sounds-list">
               <div
                 className={`settings-sound-card ${selectedSound === null ? "settings-sound-card--selected" : ""}`}

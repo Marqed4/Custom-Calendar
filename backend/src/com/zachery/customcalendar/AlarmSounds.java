@@ -11,27 +11,38 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
+import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.FloatControl;
+import javax.sound.sampled.SourceDataLine;
 
-import javazoom.jl.player.advanced.AdvancedPlayer;
+import javazoom.jl.decoder.Bitstream;
+import javazoom.jl.decoder.Decoder;
+import javazoom.jl.decoder.Header;
+import javazoom.jl.decoder.SampleBuffer;
 
 public class AlarmSounds
 {
+
     private static final String SELECTED_SOUND_FILE = "AlarmSounds/SelectedSound.txt";
+    private static final String VOLUME_FILE = "AlarmSounds/Volume.txt";
 
     private List<String> entries = new ArrayList<>();
     private Thread currentPlayback;
     private Clip currentClip;
-    private AdvancedPlayer currentMp3Player;
+    private SourceDataLine currentLine;
     private String selectedSound = null;
+    private float volume = 1.0f;
 
     public AlarmSounds()
     {
         try {
             loadSounds();
             loadSelectedSound();
+            loadVolume();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -71,6 +82,26 @@ public class AlarmSounds
             {
                 String line = scanner.nextLine().trim();
                 selectedSound = line.isEmpty() ? null : line;
+            }
+        }
+    }
+
+    private void loadVolume() throws IOException
+    {
+        java.io.File file = SystemDirectory.Directory(VOLUME_FILE);
+
+        if (!file.exists() || file.length() == 0) return;
+
+        try (Scanner scanner = new Scanner(file))
+        {
+            if (scanner.hasNextLine())
+            {
+                try {
+                    float val = Float.parseFloat(scanner.nextLine().trim());
+                    volume = Math.max(0f, Math.min(1f, val));
+                } catch (NumberFormatException e) {
+                    volume = 1.0f;
+                }
             }
         }
     }
@@ -160,63 +191,12 @@ public class AlarmSounds
             if (name.endsWith(".mp3"))
             {
                 java.io.File ref = soundFile;
-                currentPlayback = new Thread(() ->
-                {
-                    try (FileInputStream fis = new FileInputStream(ref))
-                    {
-                        synchronized (this) {
-                            currentMp3Player = new AdvancedPlayer(fis);
-                        }
-                        currentMp3Player.play();
-                    }
-                    catch (javazoom.jl.decoder.JavaLayerException e)
-                    {
-                        if (!Thread.currentThread().isInterrupted())
-                            System.err.println("MP3 playback error: " + e.getMessage());
-                    }
-                    catch (Exception e)
-                    {
-                        if (!Thread.currentThread().isInterrupted())
-                            System.err.println("MP3 playback error: " + e.getMessage());
-                    }
-                });
+                currentPlayback = new Thread(() -> playMp3(ref));
             }
             else if (name.endsWith(".wav"))
             {
                 java.io.File ref = soundFile;
-                currentPlayback = new Thread(() ->
-                {
-                    try (AudioInputStream ais = AudioSystem.getAudioInputStream(ref))
-                    {
-                        synchronized (this) {
-                            currentClip = AudioSystem.getClip();
-                        }
-                        currentClip.open(ais);
-                        currentClip.start();
-
-                        long durationMs = currentClip.getMicrosecondLength() / 1000;
-                        Thread.sleep(durationMs);
-                    }
-                    catch (InterruptedException e)
-                    {
-                        Thread.currentThread().interrupt();
-                    }
-                    catch (Exception e)
-                    {
-                        if (!Thread.currentThread().isInterrupted())
-                            System.err.println("WAV playback error: " + e.getMessage());
-                    }
-                    finally
-                    {
-                        synchronized (this) {
-                            if (currentClip != null) {
-                                currentClip.stop();
-                                currentClip.close();
-                                currentClip = null;
-                            }
-                        }
-                    }
-                });
+                currentPlayback = new Thread(() -> playWav(ref));
             }
             else
             {
@@ -233,18 +213,161 @@ public class AlarmSounds
         }
     }
 
+    private void playMp3(java.io.File file)
+    {
+        try (FileInputStream fis = new FileInputStream(file))
+        {
+            Bitstream bitstream = new Bitstream(fis);
+            Decoder decoder = new Decoder();
+            SourceDataLine line = null;
+
+            try
+            {
+                while (!Thread.currentThread().isInterrupted())
+                {
+                    Header header = bitstream.readFrame();
+                    if (header == null) break;
+
+                    SampleBuffer output = (SampleBuffer) decoder.decodeFrame(header, bitstream);
+
+                    if (line == null)
+                    {
+                        AudioFormat format = new AudioFormat(
+                            AudioFormat.Encoding.PCM_SIGNED,
+                            output.getSampleFrequency(),
+                            16,
+                            output.getChannelCount(),
+                            output.getChannelCount() * 2,
+                            output.getSampleFrequency(),
+                            false
+                        );
+                        DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
+                        line = (SourceDataLine) AudioSystem.getLine(info);
+                        line.open(format);
+                        synchronized (this) {
+                            currentLine = line;
+                        }
+                        applyVolumeToLine(line, getVolume());
+                        line.start();
+                    }
+
+                    short[] samples = output.getBuffer();
+                    int length = output.getBufferLength();
+                    byte[] bytes = new byte[length * 2];
+
+                    for (int i = 0; i < length; i++)
+                    {
+                        bytes[i * 2]     = (byte) (samples[i] & 0xFF);
+                        bytes[i * 2 + 1] = (byte) ((samples[i] >> 8) & 0xFF);
+                    }
+
+                    line.write(bytes, 0, bytes.length);
+                    bitstream.closeFrame();
+                }
+
+                if (line != null) line.drain();
+            }
+            finally
+            {
+                synchronized (this) {
+                    if (currentLine != null) {
+                        currentLine.stop();
+                        currentLine.close();
+                        currentLine = null;
+                    }
+                }
+                try { bitstream.close(); } catch (Exception ignored) {}
+            }
+        }
+        catch (Exception e)
+        {
+            if (!Thread.currentThread().isInterrupted())
+                System.err.println("MP3 playback error: " + e.getMessage());
+        }
+    }
+
+    private void playWav(java.io.File file)
+    {
+        try (AudioInputStream ais = AudioSystem.getAudioInputStream(file))
+        {
+            synchronized (this) {
+                currentClip = AudioSystem.getClip();
+            }
+            currentClip.open(ais);
+            applyVolumeToClip(currentClip, getVolume());
+            currentClip.start();
+
+            long durationMs = currentClip.getMicrosecondLength() / 1000;
+            Thread.sleep(durationMs);
+        }
+        catch (InterruptedException e)
+        {
+            Thread.currentThread().interrupt();
+        }
+        catch (Exception e)
+        {
+            if (!Thread.currentThread().isInterrupted())
+                System.err.println("WAV playback error: " + e.getMessage());
+        }
+        finally
+        {
+            synchronized (this) {
+                if (currentClip != null) {
+                    currentClip.stop();
+                    currentClip.close();
+                    currentClip = null;
+                }
+            }
+        }
+    }
+
+    private float toDecibels(float vol)
+    {
+        if (vol <= 0f) return -80f;
+        float curved = vol * vol;
+        return 20f * (float) Math.log10(curved);
+    }
+
+    private void applyVolumeToClip(Clip clip, float vol)
+    {
+        try
+        {
+            FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+            float dB = toDecibels(vol);
+            gain.setValue(Math.max(gain.getMinimum(), Math.min(gain.getMaximum(), dB)));
+        }
+        catch (Exception e)
+        {
+            System.err.println("Volume control not supported: " + e.getMessage());
+        }
+    }
+
+    private void applyVolumeToLine(SourceDataLine line, float vol)
+    {
+        try
+        {
+            FloatControl gain = (FloatControl) line.getControl(FloatControl.Type.MASTER_GAIN);
+            float dB = toDecibels(vol);
+            gain.setValue(Math.max(gain.getMinimum(), Math.min(gain.getMaximum(), dB)));
+        }
+        catch (Exception e)
+        {
+            System.err.println("Volume control not supported: " + e.getMessage());
+        }
+    }
+
     public void stopSound()
     {
         synchronized (this) {
-            if (currentMp3Player != null) {
-                currentMp3Player.close();
-                currentMp3Player = null;
-            }
-
             if (currentClip != null) {
                 currentClip.stop();
                 currentClip.close();
                 currentClip = null;
+            }
+            if (currentLine != null) {
+                currentLine.stop();
+                currentLine.close();
+                currentLine = null;
             }
         }
         if (currentPlayback != null && currentPlayback.isAlive())
@@ -295,6 +418,29 @@ public class AlarmSounds
         }
     }
 
+    public void setVolume(float vol) throws IOException
+    {
+        volume = Math.max(0f, Math.min(1f, vol));
+
+        synchronized (this) {
+            if (currentClip != null && currentClip.isOpen())
+                applyVolumeToClip(currentClip, volume);
+            if (currentLine != null && currentLine.isOpen())
+                applyVolumeToLine(currentLine, volume);
+        }
+
+        java.io.File file = SystemDirectory.ObtainFile(VOLUME_FILE);
+        try (PrintWriter pw = new PrintWriter(new FileWriter(file, false)))
+        {
+            pw.println(volume);
+        }
+    }
+
+    public float getVolume()
+    {
+        return volume;
+    }
+
     public List<String> getAllSounds()
     {
         return Collections.unmodifiableList(entries);
@@ -314,15 +460,12 @@ public class AlarmSounds
     public void selectSound(String name) throws IOException
     {
         selectedSound = (name == null || name.isEmpty()) ? null : name;
-        System.out.println("=== selectSound called with: '" + name + "' -> stored as: '" + selectedSound + "'");
 
         java.io.File file = SystemDirectory.ObtainFile(SELECTED_SOUND_FILE);
-        System.out.println("=== Writing to: " + file.getAbsolutePath());
         try (PrintWriter pw = new PrintWriter(new FileWriter(file, false)))
         {
             pw.println(selectedSound == null ? "" : selectedSound);
         }
-        System.out.println("=== File size after write: " + file.length() + " bytes");
     }
 
     public String getSelectedSound()

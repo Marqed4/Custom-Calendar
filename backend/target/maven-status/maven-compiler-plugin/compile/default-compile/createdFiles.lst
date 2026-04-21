@@ -1,6 +1,8 @@
 com\zachery\customcalendar\Main$AlarmRequest.class
 com\zachery\customcalendar\SystemDirectory.class
+com\zachery\customcalendar\Main$VolumeRequest.class
 com\zachery\customcalendar\Main.class
+com\zachery\customcalendar\Main$VolumeResponse.class
 com\zachery\customcalendar\Chat$ChatMessage.class
 com\zachery\customcalendar\AlarmRecord.class
 com\zachery\customcalendar\Chat$OllamaResponse$Message.class

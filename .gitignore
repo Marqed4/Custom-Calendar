@@ -27,4 +27,5 @@ jpackage-output
 **/frontend/src-tauri/resources/jre
 **/backend/debug.txt
 **/Automation Scripts
+rust-init.exe
 

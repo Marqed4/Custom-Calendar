@@ -76,7 +76,7 @@ public class AlarmActivation
                 pw.println("$doc = [Windows.Data.Xml.Dom.XmlDocument]::new()");
                 pw.println("$doc.LoadXml($xml)");
                 pw.println("$toast = [Windows.UI.Notifications.ToastNotification]::new($doc)");
-                pw.println("[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Microsoft.Windows.Explorer').Show($toast)");
+                pw.println("[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('com.zachery.calisigh').Show($toast)");
             }
 
             ProcessBuilder pb = new ProcessBuilder(

@@ -2,8 +2,13 @@
 mod commands;
 use std::os::windows::process::CommandExt;
 use std::process::{Command, Stdio};
-use tauri::Manager;
+use tauri::{
+    Manager,
+    menu::{Menu, MenuItem, PredefinedMenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+};
 use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_autostart::ManagerExt;
 
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -11,7 +16,7 @@ fn install_ollama() -> Result<(), String> {
     let status = Command::new("powershell")
         .args([
             "-NoProfile",
-            "-NonInteractive", 
+            "-NonInteractive",
             "-Command",
             "Invoke-WebRequest -Uri 'https://ollama.com/download/OllamaSetup.exe' -OutFile \"$env:TEMP\\OllamaSetup.exe\"; Start-Process \"$env:TEMP\\OllamaSetup.exe\" -Wait"
         ])
@@ -81,17 +86,95 @@ fn install_jre(exe_dir: &std::path::Path) -> Result<(), String> {
     }
 }
 
+fn kill_java_process() {
+    let _ = Command::new("cmd")
+        .args(["/C", "taskkill /F /IM java.exe"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .spawn();
+}
+
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::Builder::new().args(vec!["--autostart"]).build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            // Second launch attempt: show and focus the existing window
             if let Some(window) = app.get_webview_window("main") {
+                let _ = window.set_skip_taskbar(false);
+                let _ = window.show();
                 let _ = window.set_focus();
             }
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
-            // Ollama check
+            let show_item = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
+            let toggle_autostart_item = MenuItem::with_id(app, "toggle_autostart", "Toggle Autostart", true, None::<&str>)?;
+            let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+            let sep1 = PredefinedMenuItem::separator(app)?;
+            let sep2 = PredefinedMenuItem::separator(app)?;
+
+            let tray_menu = Menu::with_items(app, &[
+                &show_item,
+                &sep1,
+                &toggle_autostart_item,
+                &sep2,
+                &quit_item,
+            ])?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon({
+                    let img = image::open(
+                        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("icons/128x128@2x.png")
+                    ).unwrap().into_rgba8();
+                    let (w, h) = img.dimensions();
+                    tauri::image::Image::new_owned(img.into_raw(), w, h)
+                })
+                .menu(&tray_menu)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "show" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.set_skip_taskbar(false);
+                            let _ = win.show();
+                            let _ = win.set_focus();
+                        }
+                    }
+                    "toggle_autostart" => {
+                        let autolaunch = app.autolaunch();
+                        match autolaunch.is_enabled() {
+                            Ok(true) => { let _ = autolaunch.disable(); }
+                            Ok(false) => { let _ = autolaunch.enable(); }
+                            Err(e) => {
+                                let _ = app
+                                    .dialog()
+                                    .message(&format!("Autostart toggle failed: {}", e))
+                                    .title("Autostart")
+                                    .blocking_show();
+                            }
+                        }
+                    }
+                    "quit" => {
+                        kill_java_process();
+                        app.exit(0);
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event {
+                        let app = tray.app_handle();
+                        if let Some(win) = app.get_webview_window("main") {
+                            let _ = win.set_skip_taskbar(false);
+                            let _ = win.show();
+                            let _ = win.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
+            // --- Ollama check ---
             if !is_ollama_installed() {
                 app.dialog()
                     .message("Calisigh 3.2 requires Ollama for its chat assistant.\n\nInstall it from https://ollama.com/download, then run:\n\n  ollama pull llama3.2")
@@ -106,6 +189,7 @@ fn main() {
                 });
             }
 
+            // --- Java / JAR setup ---
             let exe_dir = std::env::current_exe()
                 .ok()
                 .and_then(|p| p.parent().map(|p| p.to_path_buf()))
@@ -148,13 +232,17 @@ fn main() {
                     let candidate = p.join("CustomCalendar.jar");
                     if candidate.exists() { Some(candidate) } else { None }
                 })
+                .or_else(|| {
+                    let candidate = exe_dir.join("CustomCalendar.jar");
+                    if candidate.exists() { Some(candidate) } else { None }
+                })
                 .expect("Could not find CustomCalendar.jar");
 
             #[cfg(debug_assertions)]
             println!("Found JAR at: {:?}", jar_path);
 
             let already_running = Command::new("cmd")
-                .args(["/C", "tasklist | findstr CustomCalendar.jar"])
+                .args(["/C", "wmic process where \"commandline like '%CustomCalendar.jar%'\" get processid 2>nul | findstr /r \"[0-9]\""])
                 .creation_flags(CREATE_NO_WINDOW)
                 .output()
                 .map(|o| !o.stdout.is_empty())
@@ -219,16 +307,48 @@ fn main() {
                 println!("Backend already running, skipping.");
             }
 
+            let autolaunch = app.autolaunch();
+            let _ = autolaunch.enable();
+
+            let is_autostart = std::env::args().any(|a| a == "--autostart");
+            if let Some(win) = app.get_webview_window("main") {
+                if is_autostart {
+                    let _ = win.set_skip_taskbar(true);
+                    let _ = win.hide();
+                } else {
+                    let _ = win.set_skip_taskbar(false);
+                    let _ = win.show();
+                    let _ = win.set_focus();
+                }
+            }
+
             Ok(())
         })
         .on_window_event(|window, event| {
-            if let tauri::WindowEvent::Destroyed = event {
-                if window.label() == "main" {
-                    let _ = Command::new("cmd")
-                        .args(["/C", "taskkill /F /IM java.exe"])
-                        .creation_flags(CREATE_NO_WINDOW)
-                        .spawn();
+            match event {
+                tauri::WindowEvent::CloseRequested { api, .. } => {
+                    if window.label() == "main" {
+                        api.prevent_close();
+                        let _ = window.set_skip_taskbar(true);
+                        let _ = window.hide();
+                    }
                 }
+                tauri::WindowEvent::Resized(_) => {
+                    if window.label() == "main" {
+                        if let Some(win) = window.get_webview_window("main") {
+                            if win.is_minimized().unwrap_or(false) {
+                                let _ = win.set_skip_taskbar(true);
+                                let _ = win.hide();
+                            }
+                        }
+                    }
+                }
+                tauri::WindowEvent::Destroyed => {
+                    if window.label() == "main" {
+                        kill_java_process();
+                    }
+                }
+                _ => {}
             }
         })
         .invoke_handler(tauri::generate_handler![commands::call_java])

@@ -48,21 +48,57 @@ fn open_window(
 #[tauri::command]
 pub fn open_add_alarm(app: AppHandle, date: String) {
     let url = format!("/add-alarm?date={}", date);
-    open_window(&app, "add-alarm", "Add Alarm", &url, 420.0, 420.0, false, true);
+    open_window(
+        &app,
+        "add-alarm",
+        "Add Alarm",
+        &url,
+        420.0,
+        420.0,
+        false,
+        true,
+    );
 }
 
 #[tauri::command]
 pub fn open_view_edit_alarm(app: AppHandle, alarm_id: String) {
     let url = format!("/view-edit-alarm?id={}", alarm_id);
-    open_window(&app, "view-edit-alarm", "Edit Alarm", &url, 420.0, 420.0, false, true);
+    open_window(
+        &app,
+        "view-edit-alarm",
+        "Edit Alarm",
+        &url,
+        420.0,
+        420.0,
+        false,
+        true,
+    );
 }
 
 #[tauri::command]
 pub fn open_settings(app: AppHandle) {
-    open_window(&app, "view-settings", "Settings", "/view-settings", 420.0, 420.0, false, true);
+    open_window(
+        &app,
+        "view-settings",
+        "Settings",
+        "/view-settings",
+        420.0,
+        420.0,
+        false,
+        true,
+    );
 }
 
 #[tauri::command]
 pub fn open_chat_assistant(app: AppHandle) {
-    open_window(&app, "view-chat-assistant", "Chat", "/view-chat-assistant", 420.0, 420.0, false, true);
+    open_window(
+        &app,
+        "view-chat-assistant",
+        "Chat",
+        "/view-chat-assistant",
+        420.0,
+        420.0,
+        false,
+        true,
+    );
 }
