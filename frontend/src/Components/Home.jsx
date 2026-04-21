@@ -79,6 +79,7 @@ export default function Home() {
   const [gridSize, setGridSize] = useState(0);
   const [isYearView, setIsYearView] = useState(false);
   const Main = useRef(null);
+  const alarmWindowOpen = useRef(false);
 
   const [bg, setBg] = useState(getBackground());
 
@@ -90,7 +91,10 @@ export default function Home() {
 
   useEffect(() => {
     waitForBackend().then(ready => {
-      if (ready) loadAlarms();
+      if (ready) {
+        loadAlarms();
+        startAlarmFiringPoller();
+      }
     });
     const unlisten = listen("alarm-saved", () => loadAlarms());
     updateSize();
@@ -100,6 +104,45 @@ export default function Home() {
       window.removeEventListener("resize", updateSize);
     };
   }, []);
+
+  function startAlarmFiringPoller() {
+    setInterval(async () => {
+      try {
+        const res = await fetch("http://localhost:4567/api/alarms/firing");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.firing && !alarmWindowOpen.current) {
+          alarmWindowOpen.current = true;
+          const query = new URLSearchParams({
+            title: data.title || "",
+            desc:  data.desc  || "",
+          }).toString();
+          const existing = await WebviewWindow.getByLabel("alarm-firing");
+          if (existing) {
+            await existing.show();
+            await existing.setFocus();
+          } else {
+            const win = new WebviewWindow("alarm-firing", {
+              url: `/alarm-firing?${query}`,
+              resizable: false,
+              center: true,
+              width: 320,
+              height: 280,
+              title: "Alarm",
+              alwaysOnTop: true,
+              skipTaskbar: false,
+            });
+            win.once("tauri://destroyed", () => {
+              alarmWindowOpen.current = false;
+            });
+          }
+        }
+        if (data && !data.firing) {
+          alarmWindowOpen.current = false;
+        }
+      } catch (_) {}
+    }, 1000);
+  }
 
   function updateSize() {
     if (Main.current) {

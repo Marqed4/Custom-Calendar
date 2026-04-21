@@ -1,6 +1,8 @@
 package com.zachery.customcalendar;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -15,6 +17,10 @@ import static spark.Spark.put;
 
 public class Main
 {
+    public static final AtomicBoolean alarmFiring = new AtomicBoolean(false);
+    public static final AtomicReference<String> firingTitle = new AtomicReference<>("");
+    public static final AtomicReference<String> firingDesc  = new AtomicReference<>("");
+
     public static void main(String[] args) throws Exception
     {
         String iconPath = SystemDirectory.Directory("resources/assets/images/icon.ico").getAbsolutePath();
@@ -65,6 +71,24 @@ public class Main
         options("/*", (req, res) -> {
             res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
             return "OK";
+        });
+
+        // Alarm firing state endpoints
+        get("/api/alarms/firing", (req, res) -> {
+            res.type("application/json");
+            return gson.toJson(new FiringResponse(
+                alarmFiring.get(),
+                firingTitle.get(),
+                firingDesc.get()
+            ));
+        });
+
+        delete("/api/alarms/firing", (req, res) -> {
+            res.type("application/json");
+            alarmFiring.set(false);
+            firingTitle.set("");
+            firingDesc.set("");
+            return gson.toJson(new MessageResponse("Firing cleared."));
         });
 
         get("/api/alarms", (req, res) -> {
@@ -227,6 +251,9 @@ public class Main
             res.type("application/json");
             try {
                 alarmSounds.stopSound();
+                alarmFiring.set(false);
+                firingTitle.set("");
+                firingDesc.set("");
                 return gson.toJson(new MessageResponse("Sound stopped."));
             } catch (Exception e) {
                 e.printStackTrace();
@@ -313,9 +340,22 @@ public class Main
         MessageResponse(String msg) { this.message = msg; }
     }
 
-    private static void registerAppForToasts(String aumid, String displayName, String iconPath) 
+    static class FiringResponse
     {
-        try 
+        boolean firing;
+        String title;
+        String desc;
+        FiringResponse(boolean firing, String title, String desc)
+        {
+            this.firing = firing;
+            this.title  = title;
+            this.desc   = desc;
+        }
+    }
+
+    private static void registerAppForToasts(String aumid, String displayName, String iconPath)
+    {
+        try
         {
             String regPath = "HKCU\\Software\\Classes\\AppUserModelId\\" + aumid;
 
@@ -330,8 +370,8 @@ public class Main
             }).waitFor();
 
             System.out.println("App registered for toasts: " + aumid);
-        } 
-        catch (Exception e) 
+        }
+        catch (Exception e)
         {
             System.err.println("Failed to register app: " + e.getMessage());
         }

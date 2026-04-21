@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Default capabilities",
-  "windows": ["main", "view-settings", "add-alarm", "view-edit-alarm", "view-chat-assistant"],
+  "windows": ["main", "view-settings", "add-alarm", "view-edit-alarm", "view-chat-assistant", "alarm-firing"],
   "permissions": [
     {
       "identifier": "opener:allow-open-url",
@@ -16,6 +16,7 @@
     "core:default",
     "core:webview:allow-create-webview-window",
     "core:window:allow-close",
+    "core:window:allow-destroy",
     "core:window:allow-show",
     "core:window:allow-set-focus",
     "core:event:allow-emit",

@@ -57,38 +57,71 @@ public class AlarmActivation
     }
 
     private void displayWindows() throws Exception
+    {
+        System.out.println("Displaying Windows Toast Notification...");
+
+        String safeTitle = sanitize(title);
+        String safeDesc  = sanitize(desc);
+
+        File tempDir = SystemDirectory.Directory("temp");
+        tempDir.mkdirs();
+        File psFile = new File(tempDir, "toast_" + System.currentTimeMillis() + ".ps1");
+
+        try (PrintWriter pw = new PrintWriter(new FileWriter(psFile)))
         {
-            System.out.println("Displaying Windows Toast Notification...");
+            pw.println("[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] | Out-Null");
+            pw.println("[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType=WindowsRuntime] | Out-Null");
+            pw.println("[Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType=WindowsRuntime] | Out-Null");
 
-            String safeTitle = sanitize(title);
-            String safeDesc  = sanitize(desc);
+            pw.println("$xml = '<toast>" +
+                "<visual><binding template=\"ToastGeneric\">" +
+                "<text>" + safeTitle + "</text>" +
+                "<text>" + safeDesc + "</text>" +
+                "</binding></visual>" +
+                "<audio silent=\"true\"/>" +
+                "<actions>" +
+                "<action content=\"Stop\" arguments=\"stop\" activationType=\"background\"/>" +
+                "</actions>" +
+                "</toast>'");
 
-            // Use AppData
-            File tempDir = SystemDirectory.Directory("temp");
-            tempDir.mkdirs();
-            File psFile = new File(tempDir, "toast_" + System.currentTimeMillis() + ".ps1");
+            pw.println("$doc = [Windows.Data.Xml.Dom.XmlDocument]::new()");
+            pw.println("$doc.LoadXml($xml)");
+            pw.println("$toast = [Windows.UI.Notifications.ToastNotification]::new($doc)");
+            pw.println("$toast.ExpirationTime = [System.DateTimeOffset]::Now.AddMinutes(5)");
 
-            try (PrintWriter pw = new PrintWriter(new FileWriter(psFile)))
-            {
-                pw.println("[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType=WindowsRuntime] | Out-Null");
-                pw.println("[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType=WindowsRuntime] | Out-Null");
-                pw.println("$xml = '<toast><visual><binding template=\"ToastGeneric\"><text>" + safeTitle + "</text><text>" + safeDesc + "</text></binding></visual></toast>'");
-                pw.println("$doc = [Windows.Data.Xml.Dom.XmlDocument]::new()");
-                pw.println("$doc.LoadXml($xml)");
-                pw.println("$toast = [Windows.UI.Notifications.ToastNotification]::new($doc)");
-                pw.println("[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('com.zachery.calisigh').Show($toast)");
-            }
+            // Use Register-ObjectEvent
+            pw.println("$global:toastDone = $false");
+            pw.println("Register-ObjectEvent -InputObject $toast -EventName Activated -Action {");
+            pw.println("    try { Invoke-RestMethod -Uri 'http://localhost:4567/api/sounds/stop' -Method Post | Out-Null } catch {}");
+            pw.println("    $global:toastDone = $true");
+            pw.println("} | Out-Null");
+            pw.println("Register-ObjectEvent -InputObject $toast -EventName Dismissed -Action {");
+            pw.println("    $global:toastDone = $true");
+            pw.println("} | Out-Null");
+            pw.println("Register-ObjectEvent -InputObject $toast -EventName Failed -Action {");
+            pw.println("    $global:toastDone = $true");
+            pw.println("} | Out-Null");
 
-            ProcessBuilder pb = new ProcessBuilder(
-                "powershell", "-ExecutionPolicy", "Bypass", "-File", psFile.getAbsolutePath()
-            );
-            pb.inheritIO();
+            pw.println("[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('com.zachery.calisigh').Show($toast)");
 
-            int exitCode = pb.start().waitFor();
-            psFile.delete();
-            System.out.println("Toast exit code: " + exitCode);
-            System.out.println("Toast Notification Sent!!!");
+            // Poll
+            pw.println("$timeout = [System.DateTime]::Now.AddMinutes(5)");
+            pw.println("while (-not $global:toastDone -and [System.DateTime]::Now -lt $timeout) {");
+            pw.println("    Start-Sleep -Milliseconds 500");
+            pw.println("}");
         }
+
+        File ref = psFile;
+        new ProcessBuilder("powershell", "-ExecutionPolicy", "Bypass", "-File", psFile.getAbsolutePath())
+            .inheritIO()
+            .start();
+
+        new Thread(() -> {
+            try { Thread.sleep(6 * 60 * 1000); ref.delete(); } catch (Exception ignored) {}
+        }).start();
+
+        System.out.println("Toast Notification Sent!!!");
+    }
 
     private void displayMac() throws Exception
     {

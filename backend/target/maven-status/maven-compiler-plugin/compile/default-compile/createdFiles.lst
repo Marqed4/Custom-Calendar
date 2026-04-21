@@ -12,6 +12,7 @@ com\zachery\customcalendar\DateAlarm.class
 com\zachery\customcalendar\Main$BackgroundRequest.class
 com\zachery\customcalendar\Chat.class
 com\zachery\customcalendar\Chat$ChatRequest.class
+com\zachery\customcalendar\Main$FiringResponse.class
 com\zachery\customcalendar\Backgrounds.class
 com\zachery\customcalendar\Main$SoundRequest.class
 com\zachery\customcalendar\Chat$ChatReply.class

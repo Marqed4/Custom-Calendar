@@ -22,18 +22,18 @@ import "./ViewEditAlarm.css";
 
 export default function ViewEditAlarm() {
   const params = new URLSearchParams(window.location.search);
-  const id    = params.get("id");
-  const day   = params.get("day");
+  const id = params.get("id");
+  const day = params.get("day");
   const month = params.get("month");
   const year  = params.get("year");
 
   const [title, setTitle] = useState(params.get("title") || "");
-  const [desc,  setDesc]  = useState(params.get("desc")  || "");
-  const [time,  setTime]  = useState(params.get("time")  || "");
+  const [desc,  setDesc] = useState(params.get("desc")  || "");
+  const [time,  setTime] = useState(params.get("time")  || "");
   const [error, setError] = useState("");
 
   const [showDuplicate, setShowDuplicate] = useState(false);
-  const [futureDate, setFutureDate]       = useState("");
+  const [futureDate, setFutureDate] = useState("");
 
   const [repeatMode, setRepeatMode] = useState("weekly");
 

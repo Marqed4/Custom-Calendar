@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./Components/Home.jsx";
 
+import AlarmFiring from "./Components/AlarmFiring.jsx";
 import AddAlarm from "./Components/AddAlarm.jsx";
 import Settings from "./Components/Settings.jsx";
 import ViewYears from "./Components/ViewYears.jsx"
@@ -28,9 +29,10 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/view-year" element={<ViewYears />} />
         <Route path="/add-alarm" element={<AddAlarm />} />
+        <Route path="/view-year" element={<ViewYears />} />
         <Route path="/view-settings" element={<Settings />} />
+        <Route path="/alarm-firing" element={<AlarmFiring />} />
         <Route path="/view-edit-alarm" element={<ViewEditAlarm />} />
         <Route path="/view-chat-assistant" element={<ViewChatAssistant/>} />
       </Routes>

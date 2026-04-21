@@ -45,7 +45,7 @@ public class DateAlarm
                     alarmDataQueue.add(alarm);
             }
         }
-            checkAlarm();
+        checkAlarm();
     }
 
     public void setAlarm(LocalDateTime time, String title, String desc) throws IOException
@@ -129,21 +129,11 @@ public class DateAlarm
                     String selected = alarmSounds.getSelectedSound();
                     System.out.println("=== Selected sound: " + selected);
 
-                    String soundPath = null;
-
-                    if (selected != null && !selected.isEmpty())
-                    {
-                        soundPath = alarmSounds.getAllSounds()
-                            .stream()
-                            .filter(e -> AlarmSounds.getDisplayName(e).equals(selected))
-                            .findFirst()
-                            .map(AlarmSounds::getFilePath)
-                            .orElse(null);
-                    }
-
-                    System.out.println("=== Sound Path: " + soundPath);
-
                     AlarmActivation activation = new AlarmActivation(cannon.title(), cannon.desc());
+
+                    Main.alarmFiring.set(true);
+                    Main.firingTitle.set(cannon.title());
+                    Main.firingDesc.set(cannon.desc());
 
                     System.out.println("=== Calling displayTray...");
                     activation.displayTray();
@@ -151,11 +141,6 @@ public class DateAlarm
                     System.out.println("=== Calling playSound...");
                     String soundName = (selected != null && !selected.isEmpty()) ? selected : "chime";
                     alarmSounds.playSound(soundName);
-
-                    /*
-                    Bug where volume gain isn't chained on fire.
-                    activation.playSound(soundPath);
-                    */
 
                     System.out.println("=== Done.");
                 }
