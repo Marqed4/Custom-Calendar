@@ -93,16 +93,31 @@ fn kill_java_process() {
         .spawn();
 }
 
+/// Attempt to show the main window, retrying up to 10 times with 200ms gaps
+/// in case the webview hasn't finished registering yet (common on cold boot).
+fn show_main_window(app: &tauri::AppHandle) {
+    let app = app.clone();
+    std::thread::spawn(move || {
+        for _ in 0..10 {
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.set_skip_taskbar(false);
+                let _ = win.show();
+                let _ = win.set_focus();
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(200));
+        }
+        #[cfg(debug_assertions)]
+        println!("show_main_window: could not get 'main' window after 10 attempts");
+    });
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_autostart::Builder::new().args(vec!["--autostart"]).build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             // Second launch attempt: show and focus the existing window
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_skip_taskbar(false);
-                let _ = window.show();
-                let _ = window.set_focus();
-            }
+            show_main_window(app);
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
@@ -132,11 +147,7 @@ fn main() {
                 .menu(&tray_menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
-                        if let Some(win) = app.get_webview_window("main") {
-                            let _ = win.set_skip_taskbar(false);
-                            let _ = win.show();
-                            let _ = win.set_focus();
-                        }
+                        show_main_window(app);
                     }
                     "toggle_autostart" => {
                         let autolaunch = app.autolaunch();
@@ -164,12 +175,7 @@ fn main() {
                         button_state: MouseButtonState::Up,
                         ..
                     } = event {
-                        let app = tray.app_handle();
-                        if let Some(win) = app.get_webview_window("main") {
-                            let _ = win.set_skip_taskbar(false);
-                            let _ = win.show();
-                            let _ = win.set_focus();
-                        }
+                        show_main_window(tray.app_handle());
                     }
                 })
                 .build(app)?;
@@ -315,8 +321,9 @@ fn main() {
                 if is_autostart {
                     let _ = win.set_skip_taskbar(true);
                     let _ = win.hide();
-                    // Cooldown
-                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    // Longer cooldown on cold boot to let the webview fully register
+                    // before any tray click events can arrive
+                    std::thread::sleep(std::time::Duration::from_millis(1500));
                 } else {
                     let _ = win.set_skip_taskbar(false);
                     let _ = win.show();
