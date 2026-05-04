@@ -27,5 +27,6 @@ jpackage-output
 **/frontend/src-tauri/resources/jre
 **/backend/debug.txt
 **/Automation Scripts
+**/backend/target
 rust-init.exe
 
