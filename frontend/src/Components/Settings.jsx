@@ -52,6 +52,9 @@ export default function Settings() {
   const [selectedBg, setSelectedBg] = useState(
     localStorage.getItem("calisigh-bg") ?? "fall"
   );
+  const [showFederal,    setShowFederal]    = useState(() => localStorage.getItem("calisigh-holidays-federal")    !== "false");
+  const [showObservance, setShowObservance] = useState(() => localStorage.getItem("calisigh-holidays-observance") !== "false");
+  const [showReligious,  setShowReligious]  = useState(() => localStorage.getItem("calisigh-holidays-religious")  !== "false");
   const [customBackgrounds, setCustomBackgrounds] = useState([]);
   const [customSounds, setCustomSounds] = useState([]);
   const [selectedSound, setSelectedSound] = useState(
@@ -229,6 +232,9 @@ export default function Settings() {
   async function save() {
     localStorage.setItem("calisigh-bg", selectedBg);
     localStorage.setItem("calisigh-custom-bgs", JSON.stringify(customBackgrounds));
+    localStorage.setItem("calisigh-holidays-federal",    String(showFederal));
+    localStorage.setItem("calisigh-holidays-observance", String(showObservance));
+    localStorage.setItem("calisigh-holidays-religious",  String(showReligious));
     if (selectedSound) localStorage.setItem("calisigh-sound", selectedSound);
     else localStorage.removeItem("calisigh-sound");
     try {
@@ -259,6 +265,39 @@ export default function Settings() {
           <div className="settings-main-body">
             <h2 className="settings-title">Settings</h2>
             <p className="settings-subtitle">Choose your background</p>
+
+            <div className="settings-toggle-row">
+              <span className="settings-toggle-label">Federal Holidays</span>
+              <button
+                className={`settings-toggle-btn ${showFederal ? "settings-toggle-btn--on" : ""}`}
+                onClick={() => setShowFederal(v => !v)}
+                title="Show or hide US federal holidays"
+              >
+                {showFederal ? "On" : "Off"}
+              </button>
+            </div>
+
+            <div className="settings-toggle-row">
+              <span className="settings-toggle-label">Observances</span>
+              <button
+                className={`settings-toggle-btn ${showObservance ? "settings-toggle-btn--on" : ""}`}
+                onClick={() => setShowObservance(v => !v)}
+                title="Show or hide cultural observances like Earth Day, Halloween, etc."
+              >
+                {showObservance ? "On" : "Off"}
+              </button>
+            </div>
+
+            <div className="settings-toggle-row">
+              <span className="settings-toggle-label">Religious Observances</span>
+              <button
+                className={`settings-toggle-btn ${showReligious ? "settings-toggle-btn--on" : ""}`}
+                onClick={() => setShowReligious(v => !v)}
+                title="Show or hide religious observances like Easter, Good Friday, Hanukkah, etc."
+              >
+                {showReligious ? "On" : "Off"}
+              </button>
+            </div>
 
             <div className="settings-bg-picker">
               {BG_MAP.map(bg => (

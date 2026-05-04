@@ -38,6 +38,10 @@ function getBackground() {
   return entry ? convertFileSrc(entry.split("|&")[1]) : BG_MAP["fall"];
 }
 
+function readToggle(key) {
+  return localStorage.getItem(key) !== "false";
+}
+
 async function openWindow(label, url, options = {}) {
   console.log("openWindow called", label);
   try {
@@ -76,15 +80,26 @@ async function waitForBackend(retries = 20, delayMs = 500) {
 export default function Home() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [alarms, setAlarms] = useState([]);
+  const [holidays, setHolidays] = useState({});
   const [gridSize, setGridSize] = useState(0);
   const [isYearView, setIsYearView] = useState(false);
+
+  const [showFederal,    setShowFederal]    = useState(() => readToggle("calisigh-holidays-federal"));
+  const [showObservance, setShowObservance] = useState(() => readToggle("calisigh-holidays-observance"));
+  const [showReligious,  setShowReligious]  = useState(() => readToggle("calisigh-holidays-religious"));
+
   const Main = useRef(null);
   const alarmWindowOpen = useRef(false);
 
   const [bg, setBg] = useState(getBackground());
 
   useEffect(() => {
-    const onFocus = () => setBg(getBackground());
+    const onFocus = () => {
+      setBg(getBackground());
+      setShowFederal(readToggle("calisigh-holidays-federal"));
+      setShowObservance(readToggle("calisigh-holidays-observance"));
+      setShowReligious(readToggle("calisigh-holidays-religious"));
+    };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, []);
@@ -104,6 +119,44 @@ export default function Home() {
       window.removeEventListener("resize", updateSize);
     };
   }, []);
+
+  useEffect(() => {
+    loadHolidays(currentDate.getFullYear());
+  }, [currentDate.getFullYear(), showFederal, showObservance, showReligious]);
+
+  async function loadHolidays(year) {
+    const categories = [];
+    if (showFederal)    categories.push("federal");
+    if (showObservance) categories.push("observance");
+    if (showReligious)  categories.push("religious");
+
+    if (categories.length === 0) {
+      setHolidays({});
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:4567/api/holidays?year=${year}&categories=${categories.join(",")}`
+      );
+      const data = await res.json();
+      const map = {};
+      for (const h of data) map[h.date] = h;
+      setHolidays(map);
+    } catch (err) {
+      console.error("Failed to load holidays:", err);
+    }
+  }
+
+  async function loadAlarms() {
+    try {
+      const res = await fetch("http://localhost:4567/api/alarms");
+      const data = await res.json();
+      setAlarms(data);
+    } catch (err) {
+      console.error("Failed to load alarms:", err);
+    }
+  }
 
   function startAlarmFiringPoller() {
     setInterval(async () => {
@@ -149,16 +202,6 @@ export default function Home() {
       const { width, height } = Main.current.getBoundingClientRect();
       const navHeight = document.querySelector(".top-nav")?.getBoundingClientRect().height ?? 55;
       setGridSize(Math.min(width, height - navHeight));
-    }
-  }
-
-  async function loadAlarms() {
-    try {
-      const res = await fetch("http://localhost:4567/api/alarms");
-      const data = await res.json();
-      setAlarms(data);
-    } catch (err) {
-      console.error("Failed to load alarms:", err);
     }
   }
 
@@ -245,6 +288,7 @@ export default function Home() {
                 onDeleteAlarm={deleteAlarm}
                 onEditAlarm={openEditWindow}
                 gridSize={gridSize}
+                holidays={holidays}
               />
             </>
           )}

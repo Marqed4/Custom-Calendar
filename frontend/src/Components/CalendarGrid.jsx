@@ -81,7 +81,27 @@ const DAY_NAMES = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const DAY_NUMBERS = [n0,n1,n2,n3,n4,n5,n6,n7,n8,n9,n10,n11,n12,n13,n14,n15,n16,n17,n18,n19,n20,n21,n22,n23,n24,n25,n26,n27,n28,n29,n30,n31];
 const DAY_NUMBERS_INVERTED = [n0i,n1i,n2i,n3i,n4i,n5i,n6i,n7i,n8i,n9i,n10i,n11i,n12i,n13i,n14i,n15i,n16i,n17i,n18i,n19i,n20i,n21i,n22i,n23i,n24i,n25i,n26i,n27i,n28i,n29i,n30i,n31i];
 
-export default function CalendarGrid({ calendarDays, currentDate, alarms, onDayClick, onDeleteAlarm, onEditAlarm, gridSize }) {
+export default function CalendarGrid({ calendarDays, currentDate, alarms, onDayClick, onDeleteAlarm, onEditAlarm, gridSize, holidays = {} }) {
+
+  // function getHoliday(date) 
+  //{
+  //   if (!date) return null;
+  //   const key = date.toISOString().split("T")[0];
+  //   return holidays[key] ?? null;
+  // }
+
+  // toISOString() call can return dates off by a day due to timezone conversion. 
+  // Instead, we can manually construct the key to avoid this issue.
+  function getHoliday(date) 
+  {
+    if (!date) return null;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const key = `${year}-${month}-${day}`;
+    return holidays[key] ?? null;
+  }
+
   return (
     <div className="calendar-grid" style={{ width: gridSize, height: gridSize }}>
 
@@ -93,19 +113,26 @@ export default function CalendarGrid({ calendarDays, currentDate, alarms, onDayC
 
       {calendarDays.map((date, i) => {
         const isToday = date && date.toDateString() === new Date().toDateString();
+        const holiday = getHoliday(date);
         return (
           <div
             key={i}
-            className={`day-cell ${isToday ? "today" : ""}`}
+            className={`day-cell ${isToday ? "today" : ""} ${holiday ? "day-cell--holiday" : ""}`}
             onClick={() => onDayClick(date)}
+            title={holiday ? holiday.name : undefined}
           >
             {date && (
               <>
-                <img
-                  src={isToday ? DAY_NUMBERS_INVERTED[date.getDate()] : DAY_NUMBERS[date.getDate()]}
-                  alt={date.getDate()}
-                  className="day-number-img"
-                />
+                <div className="day-cell-header">
+                  <img
+                    src={isToday ? DAY_NUMBERS_INVERTED[date.getDate()] : DAY_NUMBERS[date.getDate()]}
+                    alt={date.getDate()}
+                    className="day-number-img"
+                  />
+                  {holiday && (
+                    <span className="holiday-label">{holiday.shortName}</span>
+                  )}
+                </div>
                 {alarms
                   .filter(a => a.time?.startsWith(date.toISOString().split("T")[0]))
                   .map((alarm, idx) => (

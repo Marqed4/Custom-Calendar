@@ -33,6 +33,7 @@
   margin-bottom: -5px;
   width: auto;
   display: block;
+  z-index: 2;
 }
 
 .day-cell {
@@ -117,4 +118,41 @@
 
 .alarm-delete:hover {
   opacity: .50;
+}
+
+.day-cell-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 28px;
+  position: relative;
+}
+
+.holiday-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: rgba(255, 220, 120, 0.92);
+  text-align: left;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding-top: 2px;
+  padding-left: 2px;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  position: absolute;
+  top: -6px;
+  left: 0;
+  z-index: -1;
+}
+
+.day-cell--holiday {
+  background: rgba(255, 200, 60, 0.06);
+}
+
+.day-cell--holiday.today {
+  background: rgba(0, 0, 0, 0.70);
 }
