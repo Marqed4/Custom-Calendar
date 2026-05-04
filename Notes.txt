@@ -10,8 +10,9 @@ Ability to view by Day/ Week/ Year.
 
 Up & Down buttons to switch between weeks.
 
-Luxury: - >
+Luxury: - > Everything Below
 
+Holidays & Observances
 7 day forecast increment next to the integer of each day's month.
 
 View Bar: - > - >
@@ -20,7 +21,8 @@ Ability to send an email in the bottom left of the screen.
 Calendar View:
 Settings View: Dynamic user set background image, Set titles to certain gifs & images.
 
-
 Media player opening via alarm.
 YouTube video opening via alarm.
 Executable opening via alarm.
+
+Luxury: - > Everything Above
