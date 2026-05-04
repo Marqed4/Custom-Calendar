@@ -301,6 +301,35 @@ public class Main
             }
         });
 
+        get("/api/holidays", (req, res) -> {
+            res.type("application/json");
+            try {
+                String yearParam = req.queryParams("year");
+                int year = (yearParam != null)
+                    ? Integer.parseInt(yearParam)
+                    : java.time.LocalDate.now().getYear();
+
+                // Optional comma-separated category filter, e.g. ?categories=federal,religious
+                String catParam = req.queryParams("categories");
+                java.util.List<Holidays.Holiday> all = Holidays.forYear(year);
+
+                if (catParam != null && !catParam.isBlank()) {
+                    java.util.Set<String> wanted = new java.util.HashSet<>(
+                        java.util.Arrays.asList(catParam.split(","))
+                    );
+                    all = all.stream()
+                        .filter(h -> wanted.contains(h.category))
+                        .collect(java.util.stream.Collectors.toList());
+                }
+
+                return gson.toJson(all);
+            } catch (Exception e) {
+                e.printStackTrace();
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
         dateAlarm.checkAlarm();
         new Chat().register();
 

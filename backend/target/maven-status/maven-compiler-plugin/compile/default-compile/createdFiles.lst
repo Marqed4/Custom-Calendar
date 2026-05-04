@@ -6,7 +6,9 @@ com\zachery\customcalendar\Main$VolumeResponse.class
 com\zachery\customcalendar\Chat$ChatMessage.class
 com\zachery\customcalendar\AlarmRecord.class
 com\zachery\customcalendar\Chat$OllamaResponse$Message.class
+com\zachery\customcalendar\Holidays$Holiday.class
 com\zachery\customcalendar\Main$MessageResponse.class
+com\zachery\customcalendar\Holidays.class
 com\zachery\customcalendar\AlarmActivation.class
 com\zachery\customcalendar\DateAlarm.class
 com\zachery\customcalendar\Main$BackgroundRequest.class
